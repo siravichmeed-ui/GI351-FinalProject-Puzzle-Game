@@ -1,4 +1,5 @@
 
+using System.Collections;
 using UnityEngine;
 
 public class PipeTile : MonoBehaviour
@@ -12,52 +13,70 @@ public class PipeTile : MonoBehaviour
 
     public enum Direction
     {
-        Up,
-        Right,
-        Down,
-        Left
+        Up = 0,
+        Right = 1,
+        Down = 2,
+        Left = 3
     }
 
     [Header("Pipe Settings")]
-    public PipeType pipeType;
+    [SerializeField] private Transform pipeVisual;
+    [SerializeField] private GameObject center;
+    [SerializeField] private GameObject line1;
+    [SerializeField] private GameObject line2;
 
-    [Header("Pipe Visual")]
-    public Transform pipeVisual;
-    public GameObject center;
-    public GameObject line1;
-    public GameObject line2;
+    private PipeType pipeType;
+    private int rotationIndex;
 
-    private int rotationIndex = 0;
+    private Coroutine powerEffect;
+
+    [Header("Energy Colors")]
+    [SerializeField]
+    private Color normalColor =
+        new Color(0.25f, 0.25f, 0.25f);
+
+    [SerializeField]
+    private Color energyColor =
+        new Color(0.1f, 0.8f, 1f);
+
+    [SerializeField]
+    private Color glowColor =
+        new Color(0.5f, 0.95f, 1f);
+
+    [Header("Smooth Animation")]
+    [SerializeField] private float fadeDuration = 0.4f;
+    [SerializeField] private float pulseSpeed = 2f;
+    [SerializeField] private float pulseStrength = 0.25f;
+
+    private SpriteRenderer centerRenderer;
+    private SpriteRenderer line1Renderer;
+    private SpriteRenderer line2Renderer;
+
+    public int RotationIndex => rotationIndex;
 
     private void Awake()
     {
-        SetupPipe();
+        centerRenderer = center.GetComponent<SpriteRenderer>();
+        line1Renderer = line1.GetComponent<SpriteRenderer>();
+        line2Renderer = line2.GetComponent<SpriteRenderer>();
     }
 
     public void Initialize(PipeType type, int rotation)
     {
-        pipeType = type;
+        SetupPipe(type);
 
-        SetupPipe();
-
-        rotationIndex = rotation % 4;
-
+        rotationIndex = rotation;
         ApplyRotation();
+        SetPowered(false);
     }
 
-    private void OnMouseDown()
+    private void SetupPipe(PipeType type)
     {
-        if (PipeManager.Instance != null &&
-            PipeManager.Instance.IsSolved)
-            return;
+        pipeType = type;
 
-        rotationIndex = (rotationIndex + 1) % 4;
-
-        ApplyRotation();
-
-        if (PipeManager.Instance != null)
+        if (line2 != null)
         {
-            PipeManager.Instance.CheckConnection();
+            line2.SetActive(type != PipeType.End);
         }
     }
 
@@ -74,64 +93,120 @@ public class PipeTile : MonoBehaviour
         switch (pipeType)
         {
             case PipeType.Straight:
-                return dir == rotationIndex % 4 ||
+                return dir == rotationIndex ||
                        dir == (rotationIndex + 2) % 4;
 
             case PipeType.Corner:
-                return dir == rotationIndex % 4 ||
+                return dir == rotationIndex ||
                        dir == (rotationIndex + 1) % 4;
 
             case PipeType.End:
-                return dir == rotationIndex % 4;
-        }
+                return dir == rotationIndex;
 
-        return false;
+            default:
+                return false;
+        }
     }
 
-    private void SetupPipe()
+    private void OnMouseDown()
     {
-        center.SetActive(true);
-        line1.SetActive(true);
-        line2.SetActive(false);
+        if (PipeManager.Instance == null)
+            return;
 
-        line1.transform.localRotation = Quaternion.identity;
-        line2.transform.localRotation = Quaternion.identity;
+        if (PipeManager.Instance.IsSolved)
+            return;
 
-        switch (pipeType)
+        rotationIndex = (rotationIndex + 1) % 4;
+
+        ApplyRotation();
+
+        PipeManager.Instance.CheckConnection();
+    }
+
+    // เริ่มหรือหยุดเอฟเฟกต์พลังงาน
+    public void SetPowered(bool powered)
+    {
+        if (powerEffect != null)
         {
-            case PipeType.Straight:
+            StopCoroutine(powerEffect);
+            powerEffect = null;
+        }
 
-                line1.transform.localPosition = Vector3.up * 0.25f;
-                line1.transform.localScale =
-                    new Vector3(0.2f, 0.5f, 1);
+        powerEffect = StartCoroutine(AnimatePower(powered));
+    }
 
-                line2.SetActive(true);
-                line2.transform.localPosition = Vector3.down * 0.25f;
-                line2.transform.localScale =
-                    new Vector3(0.2f, 0.5f, 1);
+    private IEnumerator AnimatePower(bool powered)
+    {
+        SpriteRenderer[] renderers =
+        {
+            centerRenderer,
+            line1Renderer,
+            line2Renderer
+        };
 
-                break;
+        Color targetColor = powered ? energyColor : normalColor;
 
-            case PipeType.Corner:
+        Color[] startColors = new Color[renderers.Length];
 
-                line1.transform.localPosition = Vector3.up * 0.25f;
-                line1.transform.localScale =
-                    new Vector3(0.2f, 0.5f, 1);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+                startColors[i] = renderers[i].color;
+        }
 
-                line2.SetActive(true);
-                line2.transform.localPosition = Vector3.right * 0.25f;
-                line2.transform.localScale =
-                    new Vector3(0.5f, 0.2f, 1);
+        // ค่อย ๆ เปลี่ยนสีอย่าง Smooth
+        float elapsed = 0f;
 
-                break;
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
 
-            case PipeType.End:
+            float t = Mathf.Clamp01(elapsed / fadeDuration);
+            t = Mathf.SmoothStep(0f, 1f, t);
 
-                line1.transform.localPosition = Vector3.up * 0.25f;
-                line1.transform.localScale =
-                    new Vector3(0.2f, 0.5f, 1);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null)
+                    continue;
 
-                break;
+                renderers[i].color =
+                    Color.Lerp(startColors[i], targetColor, t);
+            }
+
+            yield return null;
+        }
+
+        // กำหนดสีสุดท้ายให้ตรงกับเป้าหมาย
+        foreach (SpriteRenderer sr in renderers)
+        {
+            if (sr != null)
+                sr.color = targetColor;
+        }
+
+        // ถ้าไม่มีพลังงาน ให้หยุดตรงนี้
+        if (!powered)
+        {
+            powerEffect = null;
+            yield break;
+        }
+
+        // เอฟเฟกต์เรืองแสงเบา ๆ ต่อเนื่อง
+        while (true)
+        {
+            float pulse = (Mathf.Sin(Time.time * pulseSpeed) + 1f) / 2f;
+
+            pulse *= pulseStrength;
+
+            Color currentGlow =
+                Color.Lerp(energyColor, glowColor, pulse);
+
+            foreach (SpriteRenderer sr in renderers)
+            {
+                if (sr != null)
+                    sr.color = currentGlow;
+            }
+
+            yield return null;
         }
     }
 }

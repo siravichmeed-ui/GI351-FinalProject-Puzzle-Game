@@ -1,22 +1,52 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 public class PipeManager : MonoBehaviour
 {
     public static PipeManager Instance;
+
+    public enum Difficulty
+    {
+        Random,
+        Easy,
+        Normal,
+        Hard
+    }
+
+    [Header("Difficulty")]
+    public Difficulty difficulty = Difficulty.Random;
+
+    private int boardSize;
+    private int minimumPathLength;
 
     [Header("Pipe Prefabs")]
     public GameObject straightPrefab;
     public GameObject cornerPrefab;
     public GameObject endPrefab;
 
-    [Header("Board Settings")]
+    [Header("Board References")]
     public Transform boardParent;
+    public Transform startPoint;
+    public Transform endPoint;
 
-    private PipeTile[] pipes = new PipeTile[9];
+    [Header("Board Settings")]
+    public float spacing = 1.5f;
+
+    private PipeTile[] pipes;
+
+    private int startRow;
+    private int endRow;
+
+    private int startIndex;
+    private int endIndex;
 
     public bool IsSolved { get; private set; }
+
+    private Coroutine energyAnimation;
+
+    public int BoardSize => boardSize;
 
     private void Awake()
     {
@@ -28,30 +58,92 @@ public class PipeManager : MonoBehaviour
         GeneratePuzzle();
     }
 
-    // Generate a new puzzle
+    // =====================================
+    // GENERATE PUZZLE
+    // =====================================
+
     public void GeneratePuzzle()
     {
-        List<int> path = new List<int>();
+        GeneratePuzzle(difficulty);
+    }
 
-        bool[] visited = new bool[9];
+    public void GeneratePuzzle(Difficulty selectedDifficulty)
+    {
+        ClearBoard();
 
-        visited[0] = true;
-        path.Add(0);
+        IsSolved = false;
 
-        if (!FindPath(0, visited, path))
+        // Select difficulty
+        if (selectedDifficulty == Difficulty.Random)
         {
-            Debug.LogError("Cannot generate path!");
+            selectedDifficulty =
+                (Difficulty)Random.Range(1, 4);
+        }
+
+        // Set board size and path length
+        switch (selectedDifficulty)
+        {
+            case Difficulty.Easy:
+                boardSize = 3;
+                minimumPathLength = 3;
+                break;
+
+            case Difficulty.Normal:
+                boardSize = 5;
+                minimumPathLength = 7;
+                break;
+
+            case Difficulty.Hard:
+                boardSize = 5;
+                minimumPathLength = 12;
+                break;
+        }
+
+        int totalPipes = boardSize * boardSize;
+
+        // Random Start and End rows
+        startRow = Random.Range(0, boardSize);
+        endRow = Random.Range(0, boardSize);
+
+        startIndex = startRow * boardSize;
+        endIndex = endRow * boardSize + (boardSize - 1);
+
+        // Move Start and End markers
+        float half = (boardSize - 1) * 0.5f;
+
+        startPoint.localPosition = new Vector3(
+            -(half + 0.75f) * spacing,
+            (half - startRow) * spacing,
+            0
+        );
+
+        endPoint.localPosition = new Vector3(
+            (half + 0.75f) * spacing,
+            (half - endRow) * spacing,
+            0
+        );
+
+        // Find a valid path
+        List<int> path = new List<int>();
+        bool[] visited = new bool[totalPipes];
+
+        visited[startIndex] = true;
+        path.Add(startIndex);
+
+        if (!FindPath(startIndex, visited, path))
+        {
+            Debug.LogError("Cannot find a valid path!");
             return;
         }
 
-        pipes = new PipeTile[9];
+        // Create pipes
+        pipes = new PipeTile[totalPipes];
 
-        // Generate all 9 tiles
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < totalPipes; i++)
         {
             int pathIndex = path.IndexOf(i);
 
-            if (pathIndex != -1)
+            if (pathIndex >= 0)
             {
                 GeneratePathPipe(i, path, pathIndex);
             }
@@ -61,44 +153,136 @@ public class PipeManager : MonoBehaviour
             }
         }
 
-        IsSolved = false;
+        Debug.Log("New Puzzle Generated!");
+        Debug.Log("Difficulty: " + selectedDifficulty);
+        Debug.Log("Board Size: " + boardSize + " x " + boardSize);
+        Debug.Log("Start Row: " + startRow);
+        Debug.Log("End Row: " + endRow);
+        Debug.Log("Path Length: " + path.Count);
+        Debug.Log("Path: " + string.Join(" -> ", path));
 
-        Debug.Log("Puzzle Generated!");
+        CheckConnection();
     }
 
-    // Create pipes that form a valid solution
+    // =====================================
+    // FIND RANDOM VALID PATH
+    // =====================================
+
+    private bool FindPath(
+        int current,
+        bool[] visited,
+        List<int> path)
+    {
+        if (current == endIndex)
+        {
+            return path.Count >= minimumPathLength;
+        }
+
+        int row = current / boardSize;
+        int col = current % boardSize;
+
+        List<int> neighbors = new List<int>();
+
+        if (row > 0)
+            neighbors.Add(current - boardSize);
+
+        if (col < boardSize - 1)
+            neighbors.Add(current + 1);
+
+        if (row < boardSize - 1)
+            neighbors.Add(current + boardSize);
+
+        if (col > 0)
+            neighbors.Add(current - 1);
+
+        // Shuffle neighbor order
+        for (int i = 0; i < neighbors.Count; i++)
+        {
+            int random = Random.Range(i, neighbors.Count);
+
+            int temp = neighbors[i];
+            neighbors[i] = neighbors[random];
+            neighbors[random] = temp;
+        }
+
+        foreach (int next in neighbors)
+        {
+            if (visited[next])
+                continue;
+
+            int nextCol = next % boardSize;
+
+            // Do not enter another left boundary cell
+            if (nextCol == 0 && next != startIndex)
+                continue;
+
+            // Do not enter another right boundary cell
+            if (nextCol == boardSize - 1 && next != endIndex)
+                continue;
+
+            visited[next] = true;
+            path.Add(next);
+
+            if (FindPath(next, visited, path))
+                return true;
+
+            path.RemoveAt(path.Count - 1);
+            visited[next] = false;
+        }
+
+        return false;
+    }
+
+    // =====================================
+    // GENERATE CORRECT PATH PIPES
+    // =====================================
+
     private void GeneratePathPipe(
         int index,
         List<int> path,
         int pathIndex)
     {
         int dirA;
-        int dirB = -1;
+        int dirB;
 
-        // Start
         if (pathIndex == 0)
         {
-            dirA = GetDirection(index, path[pathIndex + 1]);
+            // Start connects to the outside LEFT
+            dirA = 3;
+
+            dirB = GetDirection(
+                index,
+                path[pathIndex + 1]
+            );
         }
-        // End
         else if (pathIndex == path.Count - 1)
         {
-            dirA = GetDirection(index, path[pathIndex - 1]);
+            // End connects to the outside RIGHT
+            dirA = 1;
+
+            dirB = GetDirection(
+                index,
+                path[pathIndex - 1]
+            );
         }
-        // Middle
         else
         {
-            dirA = GetDirection(index, path[pathIndex - 1]);
-            dirB = GetDirection(index, path[pathIndex + 1]);
+            // Middle pipe
+            dirA = GetDirection(
+                index,
+                path[pathIndex - 1]
+            );
+
+            dirB = GetDirection(
+                index,
+                path[pathIndex + 1]
+            );
         }
 
+        // Select pipe type
         PipeTile.PipeType type;
 
-        if (dirB == -1)
-        {
-            type = PipeTile.PipeType.End;
-        }
-        else if ((dirA + 2) % 4 == dirB)
+        if ((dirA + 2) % 4 == dirB)
         {
             type = PipeTile.PipeType.Straight;
         }
@@ -114,17 +298,22 @@ public class PipeManager : MonoBehaviour
             boardParent,
             false
         );
+
         PlaceTile(obj, index);
 
         PipeTile tile = obj.GetComponent<PipeTile>();
 
         pipes[index] = tile;
 
+        // Find the correct rotation
         int correctRotation = FindCorrectRotation(
-            tile, dirA, dirB
+            tile,
+            type,
+            dirA,
+            dirB
         );
 
-        // Scramble the correct pipe direction
+        // Scramble the correct rotation
         int scramble;
 
         if (type == PipeTile.PipeType.Straight)
@@ -142,13 +331,14 @@ public class PipeManager : MonoBehaviour
         );
     }
 
-    // Fill empty cells with random pipes
+    // =====================================
+    // GENERATE RANDOM EXTRA PIPES
+    // =====================================
+
     private void GenerateRandomPipe(int index)
     {
-        int randomType = Random.Range(0, 3);
-
         PipeTile.PipeType type =
-            (PipeTile.PipeType)randomType;
+            (PipeTile.PipeType)Random.Range(0, 3);
 
         GameObject prefab = GetPrefab(type);
 
@@ -158,48 +348,72 @@ public class PipeManager : MonoBehaviour
             false
         );
 
+        PlaceTile(obj, index);
+
         PipeTile tile = obj.GetComponent<PipeTile>();
 
         pipes[index] = tile;
 
-        tile.Initialize(type, Random.Range(0, 4));
+        tile.Initialize(
+            type,
+            Random.Range(0, 4)
+        );
     }
 
-    // Find the correct rotation
+    // =====================================
+    // FIND CORRECT ROTATION
+    // =====================================
+
     private int FindCorrectRotation(
         PipeTile tile,
+        PipeTile.PipeType type,
         int dirA,
         int dirB)
     {
         for (int r = 0; r < 4; r++)
         {
-            tile.Initialize(tile.pipeType, r);
+            tile.Initialize(type, r);
 
-            bool correct = true;
+            bool hasA = tile.HasConnection(
+                (PipeTile.Direction)dirA
+            );
 
-            for (int d = 0; d < 4; d++)
-            {
-                bool expected = d == dirA || d == dirB;
+            bool hasB = tile.HasConnection(
+                (PipeTile.Direction)dirB
+            );
 
-                bool actual = tile.HasConnection(
-                    (PipeTile.Direction)d
-                );
-
-                if (expected != actual)
-                {
-                    correct = false;
-                    break;
-                }
-            }
-
-            if (correct)
+            if (hasA && hasB)
                 return r;
         }
 
         return 0;
     }
 
-    // Get prefab by type
+    // =====================================
+    // POSITION PIPES
+    // =====================================
+
+    private void PlaceTile(GameObject obj, int index)
+    {
+        int row = index / boardSize;
+        int col = index % boardSize;
+
+        float half = (boardSize - 1) * 0.5f;
+
+        float x = (col - half) * spacing;
+        float y = (half - row) * spacing;
+
+        obj.transform.localPosition = new Vector3(
+            x,
+            y,
+            0
+        );
+    }
+
+    // =====================================
+    // GET PREFAB
+    // =====================================
+
     private GameObject GetPrefab(PipeTile.PipeType type)
     {
         switch (type)
@@ -217,14 +431,17 @@ public class PipeManager : MonoBehaviour
         return null;
     }
 
-    // Get direction between two cells
+    // =====================================
+    // GET DIRECTION BETWEEN TWO CELLS
+    // =====================================
+
     private int GetDirection(int from, int to)
     {
-        int fromRow = from / 3;
-        int fromCol = from % 3;
+        int fromRow = from / boardSize;
+        int fromCol = from % boardSize;
 
-        int toRow = to / 3;
-        int toCol = to % 3;
+        int toRow = to / boardSize;
+        int toCol = to % boardSize;
 
         if (toRow < fromRow)
             return 0; // Up
@@ -238,89 +455,52 @@ public class PipeManager : MonoBehaviour
         return 3; // Left
     }
 
-    // Find a random valid path from 0 to 8
-    private bool FindPath(
-        int current,
-        bool[] visited,
-        List<int> path)
-    {
-        if (current == 8)
-            return true;
+    // =====================================
+    // CHECK CONNECTION
+    // =====================================
 
-        int row = current / 3;
-        int col = current % 3;
-
-        List<int> neighbors = new List<int>();
-
-        if (row > 0) neighbors.Add(current - 3);
-        if (col < 2) neighbors.Add(current + 1);
-        if (row < 2) neighbors.Add(current + 3);
-        if (col > 0) neighbors.Add(current - 1);
-
-        // Shuffle neighbors
-        for (int i = 0; i < neighbors.Count; i++)
-        {
-            int random = Random.Range(i, neighbors.Count);
-
-            int temp = neighbors[i];
-            neighbors[i] = neighbors[random];
-            neighbors[random] = temp;
-        }
-
-        foreach (int next in neighbors)
-        {
-            if (visited[next])
-                continue;
-
-            visited[next] = true;
-            path.Add(next);
-
-            if (FindPath(next, visited, path))
-                return true;
-
-            path.RemoveAt(path.Count - 1);
-            visited[next] = false;
-        }
-
-        return false;
-    }
-
-    // Check connection from Start to End
     public void CheckConnection()
     {
-        IsSolved = IsPathConnected();
+        if (pipes == null || pipes.Length != boardSize * boardSize)
+            return;
 
-        if (IsSolved)
+        if (energyAnimation != null)
         {
-            Debug.Log("PUZZLE SOLVED!");
+            StopCoroutine(energyAnimation);
+            energyAnimation = null;
         }
-        else
+
+        IsSolved = false;
+
+        // Turn off energy on every pipe
+        for (int i = 0; i < pipes.Length; i++)
         {
-            Debug.Log("Path not completed!");
+            pipes[i].SetPowered(false);
         }
-    }
 
-    private bool IsPathConnected()
-    {
-        if (pipes == null || pipes.Length != 9)
-            return false;
+        // Start must connect to the left
+        if (!pipes[startIndex].HasConnection(
+            PipeTile.Direction.Left))
+            return;
 
-        bool[] visited = new bool[9];
+        bool[] visited = new bool[pipes.Length];
 
         Queue<int> queue = new Queue<int>();
 
-        queue.Enqueue(0);
-        visited[0] = true;
+        List<int> energyOrder = new List<int>();
 
+        queue.Enqueue(startIndex);
+        visited[startIndex] = true;
+
+        // Find connected pipes
         while (queue.Count > 0)
         {
             int current = queue.Dequeue();
 
-            if (current == 8)
-                return true;
+            energyOrder.Add(current);
 
-            int row = current / 3;
-            int col = current % 3;
+            int row = current / boardSize;
+            int col = current % boardSize;
 
             for (int d = 0; d < 4; d++)
             {
@@ -336,11 +516,11 @@ public class PipeManager : MonoBehaviour
                 if (d == 2) nextRow++;
                 if (d == 3) nextCol--;
 
-                if (nextRow < 0 || nextRow >= 3 ||
-                    nextCol < 0 || nextCol >= 3)
+                if (nextRow < 0 || nextRow >= boardSize ||
+                    nextCol < 0 || nextCol >= boardSize)
                     continue;
 
-                int next = nextRow * 3 + nextCol;
+                int next = nextRow * boardSize + nextCol;
 
                 if (visited[next])
                     continue;
@@ -356,20 +536,59 @@ public class PipeManager : MonoBehaviour
             }
         }
 
-        return false;
+        // Check if energy reaches End
+        if (visited[endIndex] &&
+            pipes[endIndex].HasConnection(
+                PipeTile.Direction.Right))
+        {
+            IsSolved = true;
+            Debug.Log("PUZZLE SOLVED!");
+        }
 
-    }
-
-    private void PlaceTile(GameObject obj, int index)
-    {
-        int row = index / 3;
-        int col = index % 3;
-
-        obj.transform.localPosition = new Vector3(
-            col * 1.5f,
-            -row * 1.5f,
-            0f
+        // Start energy animation
+        energyAnimation = StartCoroutine(
+            AnimateEnergy(energyOrder)
         );
     }
 
+    // =====================================
+    // ANIMATE ENERGY
+    // =====================================
+
+    private IEnumerator AnimateEnergy(List<int> energyOrder)
+    {
+        foreach (int index in energyOrder)
+        {
+            pipes[index].SetPowered(true);
+
+            yield return new WaitForSeconds(0.30f);
+        }
+
+        energyAnimation = null;
+    }
+
+    // =====================================
+    // CLEAR OLD PIPES
+    // =====================================
+
+    private void ClearBoard()
+    {
+        if (energyAnimation != null)
+        {
+            StopCoroutine(energyAnimation);
+            energyAnimation = null;
+        }
+
+        for (int i = boardParent.childCount - 1; i >= 0; i--)
+        {
+            Transform child = boardParent.GetChild(i);
+
+            if (child == startPoint || child == endPoint)
+                continue;
+
+            Destroy(child.gameObject);
+        }
+
+        pipes = null;
+    }
 }

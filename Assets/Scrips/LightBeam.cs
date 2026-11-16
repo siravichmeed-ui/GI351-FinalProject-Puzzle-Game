@@ -19,6 +19,9 @@ public class LightBeam : MonoBehaviour
     public int maxReflections = 10;
     public float startOffset = 0.01f;
 
+    [Header("Puzzle Rules")]
+    public int requiredMirrorCount = 2;
+
     private LineRenderer lineRenderer;
 
     private bool targetReached;
@@ -33,16 +36,7 @@ public class LightBeam : MonoBehaviour
 
     private void Update()
     {
-        CalculateBeam();
-    }
-
-    // =====================================
-    // CALCULATE AND DRAW BEAM
-    // =====================================
-
-    private void CalculateBeam()
-    {
-        targetReached = TraceBeam(true);
+        targetReached = TraceBeam(true, true);
 
         if (targetReached && !wasTargetReached)
         {
@@ -59,12 +53,14 @@ public class LightBeam : MonoBehaviour
     // TRACE BEAM
     // =====================================
 
-    private bool TraceBeam(bool drawBeam)
+    private bool TraceBeam(bool drawBeam, bool requireAllMirrors)
     {
         if (beamOrigin == null)
             return false;
 
         List<Vector3> beamPositions = new List<Vector3>();
+        HashSet<MirrorController> hitMirrors =
+            new HashSet<MirrorController>();
 
         Vector2 origin = beamOrigin.position;
         Vector2 direction = beamOrigin.right.normalized;
@@ -87,7 +83,6 @@ public class LightBeam : MonoBehaviour
                 combinedLayer
             );
 
-            // Nothing was hit.
             if (hit.collider == null)
             {
                 Vector2 endPosition =
@@ -99,25 +94,38 @@ public class LightBeam : MonoBehaviour
 
             beamPositions.Add(hit.point);
 
-            int hitLayer =
-                1 << hit.collider.gameObject.layer;
+            int hitLayer = 1 << hit.collider.gameObject.layer;
 
-            // Target reached.
+            // Target
             if ((targetLayer.value & hitLayer) != 0)
             {
-                reachedTarget = true;
+                reachedTarget = !requireAllMirrors ||
+                    hitMirrors.Count == requiredMirrorCount;
+
                 break;
             }
 
-            // Wall blocks the beam.
+            // Wall
             if ((wallLayer.value & hitLayer) != 0)
             {
                 break;
             }
 
-            // Mirror reflection.
+            // Mirror
             if ((mirrorLayer.value & hitLayer) != 0)
             {
+                MirrorController mirror =
+                    hit.collider.GetComponentInParent<MirrorController>();
+
+                if (mirror == null)
+                    break;
+
+                // A mirror cannot be counted more than once.
+                if (hitMirrors.Contains(mirror))
+                    break;
+
+                hitMirrors.Add(mirror);
+
                 direction = Vector2.Reflect(
                     direction,
                     hit.normal
@@ -131,7 +139,6 @@ public class LightBeam : MonoBehaviour
             }
         }
 
-        // Draw beam only when requested.
         if (drawBeam && lineRenderer != null)
         {
             lineRenderer.positionCount = beamPositions.Count;
@@ -147,7 +154,7 @@ public class LightBeam : MonoBehaviour
 
     public bool ValidateSolution()
     {
-        return TraceBeam(false);
+        return TraceBeam(false, true);
     }
 
     // =====================================

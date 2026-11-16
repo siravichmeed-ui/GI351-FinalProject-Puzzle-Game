@@ -10,6 +10,8 @@ public class LightPuzzleManager : MonoBehaviour
         Normal,
         Hard
     }
+    [Header("Obstacle Walls")]
+    public ObstacleWallGenerator obstacleWallGenerator;
 
     [Header("Difficulty")]
     public Difficulty difficulty = Difficulty.Random;
@@ -32,6 +34,7 @@ public class LightPuzzleManager : MonoBehaviour
     public float targetEdgePadding = 0.5f;
     public float mirrorEdgePadding = 1.5f;
     public float mirrorXJitter = 0.5f;
+    public float minMirrorGap = 0.25f;
 
     [Header("Random Rotation")]
     public float minScrambleAngle = 25f;
@@ -47,7 +50,6 @@ public class LightPuzzleManager : MonoBehaviour
 
     private int activeMirrorCount;
     private float[] solutionAngles;
-
     private bool isCompleted;
 
     public bool IsCompleted => isCompleted;
@@ -81,14 +83,12 @@ public class LightPuzzleManager : MonoBehaviour
     {
         isCompleted = false;
 
-        // Random difficulty.
         if (selectedDifficulty == Difficulty.Random)
         {
             selectedDifficulty =
                 (Difficulty)Random.Range(1, 4);
         }
 
-        // Set mirror count.
         switch (selectedDifficulty)
         {
             case Difficulty.Easy:
@@ -104,7 +104,6 @@ public class LightPuzzleManager : MonoBehaviour
                 break;
         }
 
-        // Check references.
         if (lightSource == null ||
             lightBeam == null ||
             lightBeam.beamOrigin == null ||
@@ -121,28 +120,61 @@ public class LightPuzzleManager : MonoBehaviour
             return;
         }
 
+        for (int i = 0; i < activeMirrorCount; i++)
+        {
+            if (mirrors[i] == null ||
+                mirrors[i].GetComponent<Collider2D>() == null)
+            {
+                Debug.LogError(
+                    "Mirror " + i + " is missing MirrorController or Collider2D!"
+                );
+                return;
+            }
+        }
+
         ActivateMirrors();
 
         solutionAngles = new float[activeMirrorCount];
 
-        ResetPuzzleVisuals();
+        lightBeam.requiredMirrorCount = activeMirrorCount;
 
+        ResetPuzzleVisuals();
         lightBeam.ResetBeamState();
 
-        // Generate a valid puzzle.
         bool validPuzzle = false;
 
-        for (int attempt = 0; attempt < maxGenerationAttempts; attempt++)
+        for (int attempt = 0;
+             attempt < maxGenerationAttempts;
+             attempt++)
         {
             RandomizeSourceAndTarget();
-
             RandomizeMirrorPositions();
+
+            Physics2D.SyncTransforms();
+
+            // Generate obstacle walls.
+            if (obstacleWallGenerator != null)
+            {
+                if (!obstacleWallGenerator.Generate())
+                {
+                    continue;
+                }
+            }
+
+            Physics2D.SyncTransforms();
+
+            // Check mirror spacing before calculating the route.
+            if (!AreMirrorsSeparated())
+            {
+                continue;
+            }
 
             CalculateMirrorRotations();
 
-            // Apply transform changes before Raycast.
             Physics2D.SyncTransforms();
 
+            // The solution must hit every active mirror once
+            // and then reach the target.
             if (lightBeam.ValidateSolution())
             {
                 validPuzzle = true;
@@ -156,18 +188,16 @@ public class LightPuzzleManager : MonoBehaviour
             }
         }
 
-        // Stop if no valid puzzle was generated.
         if (!validPuzzle)
         {
             Debug.LogError(
                 "Cannot generate a valid puzzle. " +
-                "Try changing Random Area settings."
+                "Try changing Random Area or Mirror settings."
             );
 
             return;
         }
 
-        // Scramble mirrors after validation.
         ScrambleMirrors();
 
         Physics2D.SyncTransforms();
@@ -257,12 +287,47 @@ public class LightPuzzleManager : MonoBehaviour
     }
 
     // =====================================
+    // CHECK MIRROR OVERLAP / SPACING
+    // =====================================
+
+    private bool AreMirrorsSeparated()
+    {
+        for (int i = 0; i < activeMirrorCount; i++)
+        {
+            Collider2D colliderA =
+                mirrors[i].GetComponent<Collider2D>();
+
+            if (colliderA == null)
+                return false;
+
+            for (int j = i + 1; j < activeMirrorCount; j++)
+            {
+                Collider2D colliderB =
+                    mirrors[j].GetComponent<Collider2D>();
+
+                if (colliderB == null)
+                    return false;
+
+                ColliderDistance2D distance =
+                    colliderA.Distance(colliderB);
+
+                // Reject overlapping or too-close mirrors.
+                if (distance.distance < minMirrorGap)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // =====================================
     // CALCULATE SOLUTION ROTATIONS
     // =====================================
 
     private void CalculateMirrorRotations()
     {
-        // Aim source toward the first mirror.
         Vector2 sourceDirection =
             (Vector2)mirrors[0].transform.position -
             (Vector2)lightSource.position;
@@ -319,7 +384,6 @@ public class LightPuzzleManager : MonoBehaviour
 
             solutionAngles[i] = correctAngle;
 
-            // Set the correct angle first.
             mirrors[i].transform.rotation =
                 Quaternion.Euler(
                     0f,

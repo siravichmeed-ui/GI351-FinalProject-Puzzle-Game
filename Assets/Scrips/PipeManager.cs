@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using Action = System.Action;
 
 public class PipeManager : MonoBehaviour
 {
@@ -44,6 +45,11 @@ public class PipeManager : MonoBehaviour
 
     public bool IsSolved { get; private set; }
 
+    // Event แจ้งเมื่อ Puzzle สำเร็จ
+    public Action OnPuzzleSolved;
+
+    private bool solveEventSent = false;
+
     private Coroutine energyAnimation;
 
     public int BoardSize => boardSize;
@@ -72,6 +78,7 @@ public class PipeManager : MonoBehaviour
         ClearBoard();
 
         IsSolved = false;
+        solveEventSent = false;
 
         // Select difficulty
         if (selectedDifficulty == Difficulty.Random)
@@ -461,7 +468,11 @@ public class PipeManager : MonoBehaviour
 
     public void CheckConnection()
     {
-        if (pipes == null || pipes.Length != boardSize * boardSize)
+        if (pipes == null ||
+            pipes.Length != boardSize * boardSize)
+            return;
+
+        if (IsSolved)
             return;
 
         if (energyAnimation != null)
@@ -469,8 +480,6 @@ public class PipeManager : MonoBehaviour
             StopCoroutine(energyAnimation);
             energyAnimation = null;
         }
-
-        IsSolved = false;
 
         // Turn off energy on every pipe
         for (int i = 0; i < pipes.Length; i++)
@@ -565,6 +574,16 @@ public class PipeManager : MonoBehaviour
         }
 
         energyAnimation = null;
+
+        // Notify when puzzle is solved
+        if (IsSolved && !solveEventSent)
+        {
+            solveEventSent = true;
+
+            Debug.Log("Puzzle Completed Event!");
+
+            OnPuzzleSolved?.Invoke();
+        }
     }
 
     // =====================================
@@ -579,6 +598,9 @@ public class PipeManager : MonoBehaviour
             energyAnimation = null;
         }
 
+        if (boardParent == null)
+            return;
+
         for (int i = boardParent.childCount - 1; i >= 0; i--)
         {
             Transform child = boardParent.GetChild(i);
@@ -590,5 +612,11 @@ public class PipeManager : MonoBehaviour
         }
 
         pipes = null;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 }

@@ -805,12 +805,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1233112138}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.27, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.12183, y: -3.09, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1339052606}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &1233112140
 BoxCollider2D:
@@ -869,6 +869,7 @@ GameObject:
   - component: {fileID: 1339052606}
   - component: {fileID: 1339052605}
   - component: {fileID: 1339052607}
+  - component: {fileID: 1339052608}
   m_Layer: 0
   m_Name: WorkArea
   m_TagString: Untagged
@@ -910,7 +911,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.77757645, y: 0.13757074}
+  m_Offset: {x: 0.49450135, y: 0.13757074}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -920,7 +921,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 17.065243, y: 1.2751415}
+  m_Size: {x: 6.5779767, y: 1.2751415}
   m_EdgeRadius: 0
 --- !u!4 &1339052606
 Transform:
@@ -934,8 +935,7 @@ Transform:
   m_LocalPosition: {x: -1.12183, y: -2.82, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1233112139}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1339052607
@@ -958,6 +958,26 @@ MonoBehaviour:
   fadeSpeed: 10
   pulseAlpha: 0.35
   pulseDecay: 6
+--- !u!114 &1339052608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339052604}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6daecdeffd10e2744a068e99297e7312, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorkAreaClick
+  workArea: {fileID: 1339052607}
+  cursedItem: {fileID: 1106319411}
+  sceneName: CleansingScene
+  stopSpeed: 0.1
+  itemID: TeddyBear_001
+  itemName: "\u0E15\u0E38\u0E4A\u0E01\u0E15\u0E32\u0E2B\u0E21\u0E35\u0E40\u0E22\u0E47\u0E1A\u0E1B\u0E30"
+  cursedSprite: {fileID: 8579111415464493206, guid: ebd9a97bbd005604bb56bd8316163ad0, type: 3}
+  cleanedSprite: {fileID: 4693792977596894205, guid: 076bea08a9da99240b45f1ec7e91ba2f, type: 3}
 --- !u!1 &1481533736
 GameObject:
   m_ObjectHideFlags: 0
@@ -1969,3 +1989,4 @@ SceneRoots:
   - {fileID: 1106319414}
   - {fileID: 429040299}
   - {fileID: 666337227}
+  - {fileID: 1233112139}

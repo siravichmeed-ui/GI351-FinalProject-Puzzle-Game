@@ -76,6 +76,7 @@ public class DraggableItem : MonoBehaviour
     private float squashTimer = 0f;
     private float currentSquashAmount;
     private bool hasLanded = false;
+    public bool HasLanded => hasLanded;
     private float squashValue = 0f;
 
     // tilt
@@ -145,6 +146,11 @@ public class DraggableItem : MonoBehaviour
             return;
 
         hasLanded = true;
+        if (workArea != null &&
+    workArea.AreaBounds.Contains(transform.position))
+        {
+            workArea.Pulse();
+        }
 
         // ยิ่งตกแรง ยิ่งยุบเยอะ
         float strength = Mathf.Clamp01(collision.relativeVelocity.magnitude / 8f);
@@ -331,15 +337,12 @@ public class DraggableItem : MonoBehaviour
     // PICK UP ITEM
     // =================================
 
+
     void OnMouseDown()
     {
-        hasLanded = false;
+        if (workArea == null || rb == null) return;
 
-        if (workArea == null || rb == null)
-        {
-            Debug.LogError("Missing WorkArea or Rigidbody2D!");
-            return;
-        }
+        hasLanded = false;
 
         isDragging = true;
         isReturning = false;
@@ -361,12 +364,14 @@ public class DraggableItem : MonoBehaviour
 
         spriteRenderer.sortingOrder = draggingSortingOrder;
 
-        // ย่อนิดนึงก่อนแล้วค่อยพองขึ้น = "ป๊อป!" ตอนหยิบ
         scaleMul = 0.92f;
+
+        workArea.SetHighlight(true);
 
         PlaySfx(pickupSfx);
         SetCursor(grabHandCursor);
     }
+
 
     // =================================
     // DRAG ITEM
@@ -387,39 +392,32 @@ public class DraggableItem : MonoBehaviour
     // DROP ITEM
     // =================================
 
+
     void OnMouseUp()
     {
         if (!isDragging) return;
 
         isDragging = false;
-
-        Vector3 dropPosition = transform.position;
-
-        Bounds area = workArea.AreaBounds;
-        Bounds item = itemCollider.bounds;
-
-        float targetX = Mathf.Clamp(
-            dropPosition.x,
-            area.min.x + item.extents.x,
-            area.max.x - item.extents.x
-        );
-
-        float targetY = area.max.y + item.extents.y + 0.5f;
-
-        returnTarget = new Vector2(targetX, targetY);
+        isReturning = false;
 
         spriteRenderer.sortingOrder = originalSortingOrder;
 
+        // หยุดการเคลื่อนที่เดิม
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
-        rb.gravityScale = 0f;
-        rb.bodyType = RigidbodyType2D.Kinematic;
 
-        isReturning = true;
+        // เปิดฟิสิกส์ ณ จุดที่ผู้เล่นปล่อยของ
+        rb.bodyType = RigidbodyType2D.Dynamic;
+        rb.gravityScale = originalGravityScale;
+
+        // ปิด Highlight กระดาน
+        if (workArea != null)
+            workArea.SetHighlight(false);
 
         PlaySfx(dropSfx);
         SetCursor(isHovering ? openHandCursor : null);
     }
+
 
     // =================================
     // HELPERS

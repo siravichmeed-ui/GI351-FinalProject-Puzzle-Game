@@ -6,111 +6,88 @@ public class WorkAreaClick : MonoBehaviour
 {
     [Header("References")]
     public WorkArea workArea;
-    public GameObject cursedItem;
 
     [Header("Settings")]
     public string sceneName = "CleansingScene";
     public float stopSpeed = 0.1f;
 
-    [Header("Item Information")]
-    public string itemID = "TeddyBear_001";
-    public string itemName = "ตุ๊กตาหมีเย็บปะ";
-
-    [Header("Item Appearance")]
-    public Sprite cursedSprite;
-    public Sprite cleanedSprite;
-
-    private DraggableItem draggableItem;
-    private Rigidbody2D itemRb;
-    private Collider2D itemCollider;
-    private SpriteRenderer itemSpriteRenderer;
+    private GameObject currentItem;
+    private DraggableItem currentDraggable;
+    private Rigidbody2D currentRb;
+    private Collider2D currentCollider;
+    private SpriteRenderer currentSprite;
 
     private bool canEnterPuzzle = false;
-    private bool isPuzzleSolved = false;
 
     void Start()
     {
         if (workArea == null)
             workArea = GetComponent<WorkArea>();
-
-        if (cursedItem != null)
-        {
-            draggableItem = cursedItem.GetComponent<DraggableItem>();
-            itemRb = cursedItem.GetComponent<Rigidbody2D>();
-            itemCollider = cursedItem.GetComponent<Collider2D>();
-            itemSpriteRenderer = cursedItem.GetComponent<SpriteRenderer>();
-        }
-
-        // ตรวจสอบสถานะ Puzzle ของไอเทมชิ้นนี้
-        CheckItemProgress();
     }
-
-    // =====================================
-    // CHECK ITEM PROGRESS
-    // =====================================
-
-    void CheckItemProgress()
-    {
-        isPuzzleSolved =
-            ItemSessionData.IsPuzzleSolvedFor(itemID);
-
-        if (itemSpriteRenderer == null)
-            return;
-
-        if (isPuzzleSolved)
-        {
-            if (cleanedSprite != null)
-            {
-                itemSpriteRenderer.sprite = cleanedSprite;
-            }
-
-            Debug.Log(itemName + " has been cleansed!");
-        }
-        else
-        {
-            if (cursedSprite != null)
-            {
-                itemSpriteRenderer.sprite = cursedSprite;
-            }
-
-            Debug.Log(itemName + " is still cursed.");
-        }
-    }
-
-    // =====================================
-    // CHECK ITEM POSITION
-    // =====================================
 
     void Update()
     {
         canEnterPuzzle = false;
 
-        // ถ้าแก้ Puzzle แล้ว ห้ามเข้าอีก
-        if (isPuzzleSolved)
+        if (workArea == null)
             return;
 
-        if (workArea == null ||
-            cursedItem == null ||
-            draggableItem == null ||
-            itemRb == null ||
-            itemCollider == null)
+        // อ่านไอเทมที่อยู่บนกระดานในขณะนี้
+        GameObject boardItem = workArea.CurrentItem;
+
+        if (boardItem == null)
+        {
+            ClearCurrentItem();
+            return;
+        }
+
+        // ถ้าเป็นไอเทมชิ้นใหม่ ให้ดึง Component ใหม่
+        if (currentItem != boardItem)
+        {
+            SetCurrentItem(boardItem);
+        }
+
+        if (currentDraggable == null ||
+            currentRb == null ||
+            currentCollider == null ||
+            currentSprite == null)
             return;
 
-        // ตรวจว่าของอยู่บนกระดานสีเขียว
-        Bounds area = workArea.AreaBounds;
-        Bounds item = itemCollider.bounds;
+        // ตรวจสอบข้อมูลไอเทม
+        if (string.IsNullOrEmpty(currentDraggable.itemID))
+        {
+            Debug.LogError("Item ID is missing!");
+            return;
+        }
 
-        bool insideBoard = area.Contains(item.center);
+        // ตรวจสอบว่าไอเทมอยู่ในพื้นที่กระดานทั้งหมด
+        bool insideBoard =
+            workArea.IsInsideArea(currentCollider.bounds);
 
-        // ตรวจว่าของตกถึงโต๊ะแล้ว
-        bool hasLanded = draggableItem.HasLanded;
+        // ตรวจสอบว่าไอเทมตกถึงโต๊ะแล้ว
+        bool hasLanded = currentDraggable.HasLanded;
 
-        // ตรวจว่าของหยุดนิ่งแล้ว
+        // ตรวจสอบว่าไอเทมหยุดนิ่งแล้ว
         bool isStopped =
-            itemRb.bodyType == RigidbodyType2D.Dynamic &&
-            itemRb.linearVelocity.magnitude <= stopSpeed &&
-            Mathf.Abs(itemRb.angularVelocity) <= stopSpeed;
+            currentRb.bodyType == RigidbodyType2D.Dynamic &&
+            currentRb.linearVelocity.magnitude <= stopSpeed &&
+            Mathf.Abs(currentRb.angularVelocity) <= stopSpeed;
 
+        // ถ้า Puzzle ของไอเทมนี้แก้แล้ว ให้เปลี่ยนเป็นภาพสะอาด
+        bool isPuzzleSolved =
+            ItemSessionData.IsPuzzleSolvedFor(currentDraggable.itemID);
+
+        if (isPuzzleSolved)
+        {
+            if (currentDraggable.cleanedSprite != null)
+            {
+                currentSprite.sprite = currentDraggable.cleanedSprite;
+            }
+
+            return;
+        }
+
+        // อนุญาตให้คลิกกระดานเมื่อไอเทมพร้อมเท่านั้น
         canEnterPuzzle =
             insideBoard &&
             hasLanded &&
@@ -118,44 +95,112 @@ public class WorkAreaClick : MonoBehaviour
     }
 
     // =====================================
-    // CLICK GREEN BOARD
+    // SET CURRENT ITEM
+    // =====================================
+
+    void SetCurrentItem(GameObject item)
+    {
+        currentItem = item;
+
+        currentDraggable =
+            item.GetComponent<DraggableItem>();
+
+        currentRb =
+            item.GetComponent<Rigidbody2D>();
+
+        currentCollider =
+            item.GetComponent<Collider2D>();
+
+        currentSprite =
+            item.GetComponent<SpriteRenderer>();
+
+        if (currentDraggable == null)
+            Debug.LogError("Item has no DraggableItem!");
+
+        if (currentRb == null)
+            Debug.LogError("Item has no Rigidbody2D!");
+
+        if (currentCollider == null)
+            Debug.LogError("Item has no Collider2D!");
+
+        if (currentSprite == null)
+            Debug.LogError("Item has no SpriteRenderer!");
+
+        if (currentDraggable != null)
+        {
+            Debug.Log(
+                "WorkArea Item: " +
+                currentDraggable.itemName
+            );
+        }
+    }
+
+    // =====================================
+    // CLEAR CURRENT ITEM
+    // =====================================
+
+    void ClearCurrentItem()
+    {
+        currentItem = null;
+        currentDraggable = null;
+        currentRb = null;
+        currentCollider = null;
+        currentSprite = null;
+    }
+
+    // =====================================
+    // CLICK BOARD
     // =====================================
 
     void OnMouseDown()
     {
-        // ตรวจสอบสถานะอีกครั้งก่อนเข้า Puzzle
-        if (ItemSessionData.IsPuzzleSolvedFor(itemID))
+        if (workArea == null)
+            return;
+
+        // ต้องมีไอเทมอยู่บนกระดาน
+        GameObject boardItem = workArea.CurrentItem;
+
+        if (boardItem == null)
+        {
+            Debug.Log("No item on WorkArea!");
+            return;
+        }
+
+        // ตรวจสอบว่าข้อมูลที่ Cache ไว้ตรงกับไอเทมปัจจุบัน
+        if (currentItem != boardItem)
+        {
+            SetCurrentItem(boardItem);
+        }
+
+        if (!canEnterPuzzle)
+        {
+            Debug.Log("Item is not ready for Puzzle!");
+            return;
+        }
+
+        if (currentDraggable == null ||
+            currentSprite == null)
+            return;
+
+        string id = currentDraggable.itemID;
+        string itemName = currentDraggable.itemName;
+
+        // ป้องกันการเข้า Puzzle ซ้ำ
+        if (ItemSessionData.IsPuzzleSolvedFor(id))
         {
             Debug.Log(itemName + " has already been cleansed!");
             return;
         }
 
-        if (!canEnterPuzzle)
-        {
-            Debug.Log("Item is not ready!");
-            return;
-        }
-
-        if (cursedItem == null)
-            return;
-
-        SpriteRenderer itemSprite =
-            cursedItem.GetComponent<SpriteRenderer>();
-
-        if (itemSprite == null)
-        {
-            Debug.LogError("CursedItem has no SpriteRenderer!");
-            return;
-        }
-
-        // เก็บข้อมูลก่อนเปลี่ยน Scene
+        // บันทึกข้อมูลไอเทมที่เลือก
         ItemSessionData.SetCurrentItem(
-            itemID,
+            id,
             itemName,
-            itemSprite.sprite
+            currentSprite.sprite
         );
 
-        // เข้าสู่ Scene ตรวจสอบคำสาป
+        Debug.Log("Entering Puzzle: " + itemName);
+
         SceneManager.LoadScene(sceneName);
     }
 }

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e267ee487122e747b1bd15e3ccedf16, type: 3}
+  m_Name: Item_TeddyBear
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemID: TeddyBear_001
+  itemName: Bear
+  itemPrefab: {fileID: 6906783335301718194, guid: 71449c39c90723b40a6523266a7de471, type: 3}
+  cursedSprite: {fileID: 8579111415464493206, guid: ebd9a97bbd005604bb56bd8316163ad0, type: 3}
+  cleanedSprite: {fileID: 4693792977596894205, guid: 076bea08a9da99240b45f1ec7e91ba2f, type: 3}

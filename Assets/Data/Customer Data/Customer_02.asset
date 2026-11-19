@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fa13ab0b6667c04ab655219b890eaba, type: 3}
+  m_Name: Customer_02
+  m_EditorClassIdentifier: Assembly-CSharp::CustomerData
+  customerID: Customer_02
+  customerName: Dog
+  customerMessage: I Have Something to Show You!=
+  customerPrefab: {fileID: 8264339222017198372, guid: b76bb60171105144487145b30e4f9a11, type: 3}
+  possibleItems:
+  - {fileID: 11400000, guid: 2e0587378826fdb42a44d443ad550055, type: 2}
+  - {fileID: 11400000, guid: 8afbac77c78953542a0556de98860310, type: 2}
+  - {fileID: 11400000, guid: f5ad7a7f2066f804a839cbb00f244fc5, type: 2}
+  - {fileID: 11400000, guid: 50797cd885610824881250d1765b7b7b, type: 2}
+  - {fileID: 11400000, guid: b30f85769c6f35c43a4a8ed1f0015dc1, type: 2}

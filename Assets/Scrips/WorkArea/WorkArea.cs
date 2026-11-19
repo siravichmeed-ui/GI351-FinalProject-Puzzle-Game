@@ -1,21 +1,19 @@
+
 using UnityEngine;
 
 public class WorkArea : MonoBehaviour
 {
     [Header("Juice (optional)")]
-    [Tooltip("Sprite ที่ใช้เรืองแสงบอกพื้นที่ทำงาน (ถ้าไม่ใส่จะข้ามไป)")]
     public SpriteRenderer areaVisual;
 
     [Range(0f, 1f)] public float idleAlpha = 0f;
     [Range(0f, 1f)] public float highlightAlpha = 0.25f;
 
-    [Tooltip("ความเร็วและความแรงของการ 'หายใจ' ตอนไฮไลต์")]
     public float breathSpeed = 3f;
     [Range(0f, 0.5f)] public float breathAmount = 0.08f;
-
     public float fadeSpeed = 10f;
 
-    [Header("Pulse (กระพริบตอนของตกลงมา)")]
+    [Header("Pulse")]
     [Range(0f, 1f)] public float pulseAlpha = 0.35f;
     public float pulseDecay = 6f;
 
@@ -25,6 +23,12 @@ public class WorkArea : MonoBehaviour
     private float currentAlpha;
     private float pulse;
     private bool isHighlighted;
+
+    // ไอเทมที่กำลังอยู่บนกระดาน
+    private GameObject currentItem;
+
+    public GameObject CurrentItem => currentItem;
+    public bool IsOccupied => currentItem != null;
 
     public Bounds AreaBounds
     {
@@ -53,7 +57,6 @@ public class WorkArea : MonoBehaviour
         if (areaVisual == null) return;
 
         float dt = Time.deltaTime;
-
         float target = idleAlpha;
 
         if (isHighlighted)
@@ -63,11 +66,16 @@ public class WorkArea : MonoBehaviour
         }
 
         currentAlpha = Mathf.Lerp(
-            currentAlpha, target,
+            currentAlpha,
+            target,
             1f - Mathf.Exp(-fadeSpeed * dt)
         );
 
-        pulse = Mathf.Lerp(pulse, 0f, 1f - Mathf.Exp(-pulseDecay * dt));
+        pulse = Mathf.Lerp(
+            pulse,
+            0f,
+            1f - Mathf.Exp(-pulseDecay * dt)
+        );
 
         ApplyAlpha(currentAlpha + pulse);
     }
@@ -80,26 +88,59 @@ public class WorkArea : MonoBehaviour
     }
 
     // =================================
-    // PUBLIC JUICE API
+    // BOARD OCCUPANCY
     // =================================
 
-    // เรียกตอนหยิบ = true, ตอนปล่อย = false
+    public bool TryPlaceItem(GameObject item)
+    {
+        if (item == null) return false;
+
+        // ถ้ามีไอเทมอื่นอยู่แล้ว ห้ามวางเพิ่ม
+        if (currentItem != null && currentItem != item)
+        {
+            Debug.Log("WorkArea is already occupied!");
+            return false;
+        }
+
+        currentItem = item;
+
+        Debug.Log("Item placed on WorkArea: " + item.name);
+        return true;
+    }
+
+    public void ReleaseItem(GameObject item)
+    {
+        // ปลดล็อกเฉพาะไอเทมที่เป็นเจ้าของพื้นที่
+        if (currentItem != item) return;
+
+        currentItem = null;
+
+        Debug.Log("WorkArea is now empty.");
+    }
+
+    public bool IsCurrentItem(GameObject item)
+    {
+        return currentItem == item;
+    }
+
+    // =================================
+    // JUICE
+    // =================================
+
     public void SetHighlight(bool value)
     {
         isHighlighted = value;
     }
 
-    // เรียกตอนของตกกระทบพื้นที่
     public void Pulse(float strength = 1f)
     {
         pulse = pulseAlpha * strength;
     }
 
     // =================================
-    // ORIGINAL API
+    // AREA CHECK
     // =================================
 
-    // ตรวจสอบว่าวัตถุอยู่ในพื้นที่หรือไม่
     public bool IsInsideArea(Bounds itemBounds)
     {
         Bounds area = AreaBounds;
@@ -110,7 +151,6 @@ public class WorkArea : MonoBehaviour
                itemBounds.max.y <= area.max.y;
     }
 
-    // จำกัดตำแหน่งไม่ให้วัตถุออกนอกพื้นที่
     public Vector3 ClampPosition(
         Vector3 position,
         Bounds itemBounds)
@@ -129,7 +169,6 @@ public class WorkArea : MonoBehaviour
         return position;
     }
 
-    // วาดกรอบพื้นที่ใน Scene view ให้เห็นง่ายๆ
     void OnDrawGizmos()
     {
         BoxCollider2D col = GetComponent<BoxCollider2D>();

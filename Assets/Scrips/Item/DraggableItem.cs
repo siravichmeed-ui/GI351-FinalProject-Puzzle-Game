@@ -6,6 +6,14 @@ public class DraggableItem : MonoBehaviour
     [Header("References")]
     public WorkArea workArea;
 
+    [Header("Item Information")]
+    public string itemID;
+    public string itemName;
+
+    [Header("Item Appearance")]
+    public Sprite cursedSprite;
+    public Sprite cleanedSprite;
+
     [Header("Cursor")]
     public Texture2D openHandCursor;
     public Texture2D grabHandCursor;
@@ -66,6 +74,7 @@ public class DraggableItem : MonoBehaviour
     private bool isReturning = false;
     private bool isHovering = false;
     private Vector2 returnTarget;
+    private bool returnToBoard = false;
 
     // scale
     private Vector3 originalScale;
@@ -240,8 +249,18 @@ public class DraggableItem : MonoBehaviour
             {
                 isReturning = false;
 
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+
                 rb.bodyType = RigidbodyType2D.Dynamic;
                 rb.gravityScale = originalGravityScale;
+
+                if (returnToBoard && workArea != null)
+                {
+                    workArea.TryPlaceItem(gameObject);
+                }
+
+                returnToBoard = false;
             }
         }
     }
@@ -342,6 +361,12 @@ public class DraggableItem : MonoBehaviour
     {
         if (workArea == null || rb == null) return;
 
+        // ถ้าไอเทมนี้อยู่บนกระดาน ให้ปลดล็อกกระดานตอนหยิบ
+        if (workArea.IsCurrentItem(gameObject))
+        {
+            workArea.ReleaseItem(gameObject);
+        }
+
         hasLanded = false;
 
         isDragging = true;
@@ -398,21 +423,44 @@ public class DraggableItem : MonoBehaviour
         if (!isDragging) return;
 
         isDragging = false;
-        isReturning = false;
 
         spriteRenderer.sortingOrder = originalSortingOrder;
 
-        // หยุดการเคลื่อนที่เดิม
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
 
-        // เปิดฟิสิกส์ ณ จุดที่ผู้เล่นปล่อยของ
+        if (workArea != null)
+        {
+            workArea.SetHighlight(false);
+
+            // ตรวจว่าไอเทมอยู่ในพื้นที่กระดานทั้งหมดหรือไม่
+            bool insideBoard = workArea.IsInsideArea(itemCollider.bounds);
+
+            if (insideBoard)
+            {
+                // พยายามจองพื้นที่กระดาน
+                bool placed = workArea.TryPlaceItem(gameObject);
+
+                if (!placed)
+                {
+                    // กระดานไม่ว่าง ให้กลับตำแหน่งเดิม
+                    ReturnToOriginalPosition();
+                    return;
+                }
+
+                workArea.Pulse();
+            }
+            else
+            {
+                // ปล่อยนอกกระดาน ไม่ต้องจองพื้นที่
+                workArea.ReleaseItem(gameObject);
+            }
+        }
+
+        isReturning = false;
+
         rb.bodyType = RigidbodyType2D.Dynamic;
         rb.gravityScale = originalGravityScale;
-
-        // ปิด Highlight กระดาน
-        if (workArea != null)
-            workArea.SetHighlight(false);
 
         PlaySfx(dropSfx);
         SetCursor(isHovering ? openHandCursor : null);
@@ -456,5 +504,20 @@ public class DraggableItem : MonoBehaviour
         );
 
         Cursor.SetCursor(cursorTexture, hotspot, CursorMode.Auto);
+    }
+
+    void ReturnToOriginalPosition()
+    {
+        isReturning = true;
+        returnToBoard = false;
+
+        returnTarget = originalPosition;
+
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.gravityScale = 0f;
+        rb.bodyType = RigidbodyType2D.Kinematic;
+
+        PlaySfx(dropSfx);
     }
 }

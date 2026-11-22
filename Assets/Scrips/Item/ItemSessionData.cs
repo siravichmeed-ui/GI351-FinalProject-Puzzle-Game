@@ -4,19 +4,40 @@ using System.Collections.Generic;
 
 public static class ItemSessionData
 {
+    // =====================================
+    // CURRENT ITEM
+    // =====================================
+
     public static string CurrentItemID { get; private set; }
+    public static string CurrentItemInstanceID { get; private set; }
     public static string CurrentItemName { get; private set; }
     public static Sprite CurrentItemSprite { get; private set; }
 
     public static bool IsCurseFound { get; private set; }
     public static bool IsPuzzleSolved { get; private set; }
 
-    private const string SaveKey = "CursedShop_ItemProgress";
+    // =====================================
+    // PENDING ITEM
+    // =====================================
+
+    public static ItemData PendingItemData { get; private set; }
+    public static string PendingInstanceID { get; private set; }
+
+    public static Vector3 PendingItemPosition { get; private set; }
+    public static Quaternion PendingItemRotation { get; private set; }
+
+    public static bool HasPendingWorkAreaItem { get; private set; }
+
+    // =====================================
+    // SAVE DATA
+    // =====================================
+
+    private const string SaveKey = "CursedShop_InstanceProgress";
 
     [System.Serializable]
     private class ItemProgress
     {
-        public string itemID;
+        public string instanceID;
         public bool curseFound;
         public bool puzzleSolved;
     }
@@ -27,10 +48,14 @@ public static class ItemSessionData
         public List<ItemProgress> items = new List<ItemProgress>();
     }
 
-    private static Dictionary<string, ItemProgress> itemProgress =
+    private static Dictionary<string, ItemProgress> progress =
         new Dictionary<string, ItemProgress>();
 
-    private static bool hasLoaded = false;
+    private static bool hasLoaded;
+
+    // =====================================
+    // LOAD
+    // =====================================
 
     private static void LoadProgress()
     {
@@ -38,184 +63,288 @@ public static class ItemSessionData
             return;
 
         hasLoaded = true;
-        itemProgress.Clear();
+
+        progress.Clear();
 
         if (!PlayerPrefs.HasKey(SaveKey))
             return;
 
-        string json = PlayerPrefs.GetString(SaveKey);
-        SaveData data = JsonUtility.FromJson<SaveData>(json);
+        SaveData data = JsonUtility.FromJson<SaveData>(
+            PlayerPrefs.GetString(SaveKey)
+        );
 
         if (data == null || data.items == null)
             return;
 
         foreach (ItemProgress item in data.items)
         {
-            if (item != null && !string.IsNullOrEmpty(item.itemID))
+            if (item != null &&
+                !string.IsNullOrEmpty(item.instanceID))
             {
-                itemProgress[item.itemID] = item;
+                progress[item.instanceID] = item;
             }
         }
-
-        Debug.Log("Loaded Item Progress: " + itemProgress.Count);
     }
+
+    // =====================================
+    // SAVE
+    // =====================================
 
     private static void SaveProgress()
     {
         SaveData data = new SaveData();
 
-        foreach (ItemProgress item in itemProgress.Values)
+        foreach (ItemProgress item in progress.Values)
         {
             data.items.Add(item);
         }
 
-        string json = JsonUtility.ToJson(data);
+        PlayerPrefs.SetString(
+            SaveKey,
+            JsonUtility.ToJson(data)
+        );
 
-        PlayerPrefs.SetString(SaveKey, json);
         PlayerPrefs.Save();
-
-        Debug.Log("Item Progress Saved!");
     }
 
-    public static void SetCurrentItem(string itemID, string itemName, Sprite itemSprite)
+    // =====================================
+    // REGISTER NEW ITEM
+    // =====================================
+
+    public static void RegisterNewItem(string instanceID)
     {
         LoadProgress();
 
-        if (string.IsNullOrEmpty(itemID))
+        if (string.IsNullOrEmpty(instanceID))
+            return;
+
+        progress[instanceID] = new ItemProgress
         {
-            Debug.LogError("Item ID cannot be empty!");
+            instanceID = instanceID,
+            curseFound = false,
+            puzzleSolved = false
+        };
+
+        SaveProgress();
+
+        Debug.Log("Registered new Item: " + instanceID);
+    }
+
+    // =====================================
+    // SET CURRENT ITEM
+    // =====================================
+
+    public static void SetCurrentItem(
+        string instanceID,
+        string itemID,
+        string itemName,
+        Sprite itemSprite)
+    {
+        LoadProgress();
+
+        if (string.IsNullOrEmpty(instanceID))
+        {
+            Debug.LogError("Instance ID is missing!");
             return;
         }
 
+        CurrentItemInstanceID = instanceID;
         CurrentItemID = itemID;
         CurrentItemName = itemName;
         CurrentItemSprite = itemSprite;
 
-        if (!itemProgress.ContainsKey(itemID))
+        if (!progress.ContainsKey(instanceID))
         {
-            itemProgress.Add(itemID, new ItemProgress
-            {
-                itemID = itemID,
-                curseFound = false,
-                puzzleSolved = false
-            });
+            RegisterNewItem(instanceID);
         }
 
-        ItemProgress progress = itemProgress[itemID];
+        ItemProgress item = progress[instanceID];
 
-        IsCurseFound = progress.curseFound;
-        IsPuzzleSolved = progress.puzzleSolved;
-
-        Debug.Log("Current Item: " + CurrentItemName);
-        Debug.Log("Item ID: " + CurrentItemID);
-        Debug.Log("Puzzle Solved: " + IsPuzzleSolved);
+        IsCurseFound = item.curseFound;
+        IsPuzzleSolved = item.puzzleSolved;
     }
 
+    // =====================================
+    // MARK CURSE FOUND
+    // =====================================
+
+
+    // รองรับโค้ดเดิมที่เรียกโดยไม่ส่ง instanceID
+    // ใช้ Instance ID ของ Item ที่กำลังเปิดอยู่
     public static void MarkCurseFound()
     {
-        LoadProgress();
-
-        if (!HasCurrentItem())
-        {
-            Debug.LogError("No Current Item!");
-            return;
-        }
-
-        ItemProgress progress = GetCurrentProgress();
-
-        progress.curseFound = true;
-        IsCurseFound = true;
-
-        SaveProgress();
+        MarkCurseFound(CurrentItemInstanceID);
     }
 
     public static void MarkPuzzleSolved()
     {
+        MarkPuzzleSolved(CurrentItemInstanceID);
+    }
+
+    public static void MarkCurseFound(string instanceID)
+    {
         LoadProgress();
 
-        if (!HasCurrentItem())
-        {
-            Debug.LogError("No Current Item!");
+        if (string.IsNullOrEmpty(instanceID))
             return;
+
+        if (!progress.ContainsKey(instanceID))
+        {
+            progress[instanceID] = new ItemProgress
+            {
+                instanceID = instanceID,
+                curseFound = false,
+                puzzleSolved = false
+            };
         }
 
-        ItemProgress progress = GetCurrentProgress();
+        progress[instanceID].curseFound = true;
 
-        progress.curseFound = true;
-        progress.puzzleSolved = true;
-
-        IsCurseFound = true;
-        IsPuzzleSolved = true;
+        if (CurrentItemInstanceID == instanceID)
+            IsCurseFound = true;
 
         SaveProgress();
-
-        Debug.Log("Puzzle Solved: " + CurrentItemName);
     }
 
-    public static bool IsPuzzleSolvedFor(string itemID)
+    public static void MarkPuzzleSolved(string instanceID)
     {
         LoadProgress();
 
-        if (string.IsNullOrEmpty(itemID))
-            return false;
+        if (string.IsNullOrEmpty(instanceID))
+            return;
 
-        if (!itemProgress.ContainsKey(itemID))
-            return false;
+        if (!progress.ContainsKey(instanceID))
+        {
+            progress[instanceID] = new ItemProgress
+            {
+                instanceID = instanceID,
+                curseFound = false,
+                puzzleSolved = false
+            };
+        }
 
-        return itemProgress[itemID].puzzleSolved;
+        progress[instanceID].curseFound = true;
+        progress[instanceID].puzzleSolved = true;
+
+        if (CurrentItemInstanceID == instanceID)
+        {
+            IsCurseFound = true;
+            IsPuzzleSolved = true;
+        }
+
+        SaveProgress();
     }
 
-    public static bool IsCurseFoundFor(string itemID)
+
+    // =====================================
+    // CHECK PUZZLE
+    // =====================================
+
+    public static bool IsPuzzleSolvedFor(string instanceID)
     {
         LoadProgress();
 
-        if (string.IsNullOrEmpty(itemID))
-            return false;
-
-        if (!itemProgress.ContainsKey(itemID))
-            return false;
-
-        return itemProgress[itemID].curseFound;
+        return !string.IsNullOrEmpty(instanceID) &&
+               progress.ContainsKey(instanceID) &&
+               progress[instanceID].puzzleSolved;
     }
+
+    public static bool IsCurseFoundFor(string instanceID)
+    {
+        LoadProgress();
+
+        return !string.IsNullOrEmpty(instanceID) &&
+               progress.ContainsKey(instanceID) &&
+               progress[instanceID].curseFound;
+    }
+
+    // =====================================
+    // CURRENT PROGRESS
+    // =====================================
 
     private static ItemProgress GetCurrentProgress()
     {
-        if (!itemProgress.ContainsKey(CurrentItemID))
+        if (!progress.ContainsKey(CurrentItemInstanceID))
         {
-            itemProgress.Add(CurrentItemID, new ItemProgress
+            progress[CurrentItemInstanceID] = new ItemProgress
             {
-                itemID = CurrentItemID,
+                instanceID = CurrentItemInstanceID,
                 curseFound = false,
                 puzzleSolved = false
-            });
+            };
         }
 
-        return itemProgress[CurrentItemID];
+        return progress[CurrentItemInstanceID];
     }
 
     public static bool HasCurrentItem()
     {
-        return !string.IsNullOrEmpty(CurrentItemID);
+        return !string.IsNullOrEmpty(CurrentItemInstanceID);
     }
-#if UNITY_EDITOR
-    [UnityEditor.InitializeOnEnterPlayMode]
-    private static void ResetOnPlayMode()
+
+    // =====================================
+    // SAVE PENDING ITEM
+    // =====================================
+
+    public static void SavePendingWorkAreaItem(
+        ItemData data,
+        string instanceID,
+        Vector3 position,
+        Quaternion rotation)
     {
-        PlayerPrefs.DeleteAll();
+        if (data == null ||
+            string.IsNullOrEmpty(instanceID))
+        {
+            Debug.LogError("Cannot save pending Item!");
+            return;
+        }
+
+        PendingItemData = data;
+        PendingInstanceID = instanceID;
+
+        PendingItemPosition = position;
+        PendingItemRotation = rotation;
+
+        HasPendingWorkAreaItem = true;
+    }
+
+    // =====================================
+    // CLEAR PENDING ITEM
+    // =====================================
+
+    public static void ClearPendingWorkAreaItem()
+    {
+        PendingItemData = null;
+        PendingInstanceID = null;
+
+        HasPendingWorkAreaItem = false;
+    }
+
+
+    public static void ResetAllProgress()
+    {
+        progress.Clear();
+        hasLoaded = true;
+
+        PlayerPrefs.DeleteKey(SaveKey);
         PlayerPrefs.Save();
 
-        itemProgress.Clear();
-
         CurrentItemID = null;
+        CurrentItemInstanceID = null;
         CurrentItemName = null;
         CurrentItemSprite = null;
 
         IsCurseFound = false;
         IsPuzzleSolved = false;
 
-        hasLoaded = true;
+        PendingItemData = null;
+        PendingInstanceID = null;
+        PendingItemPosition = Vector3.zero;
+        PendingItemRotation = Quaternion.identity;
 
-        Debug.Log("All Game Data Cleared!");
+        HasPendingWorkAreaItem = false;
+
+        Debug.Log("All Item Progress Reset.");
     }
-#endif
+
 }

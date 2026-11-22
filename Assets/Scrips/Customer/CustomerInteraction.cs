@@ -66,12 +66,21 @@ public class CustomerInteraction : MonoBehaviour
 
     void Start()
     {
+        if (dialogueBubble == null)
+        {
+            Debug.LogError("CustomerInteraction: Dialogue Bubble is missing!", this);
+            return;
+        }
+
         dialogueRect = dialogueBubble.GetComponent<RectTransform>();
 
         dialogueBubble.SetActive(false);
-        dialogueCanvasGroup.alpha = 0;
+
+        if (dialogueCanvasGroup != null)
+            dialogueCanvasGroup.alpha = 0;
 
         audioSource = GetComponent<AudioSource>();
+
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
@@ -82,6 +91,9 @@ public class CustomerInteraction : MonoBehaviour
         if (movement == null)
             movement = GetComponent<CustomerMovement>();
 
+        if (itemDelivery == null)
+            itemDelivery = GetComponent<ItemDelivery>();
+
         if (alertIcon != null)
         {
             alertBasePos = alertIcon.localPosition;
@@ -89,7 +101,6 @@ public class CustomerInteraction : MonoBehaviour
             alertIcon.gameObject.SetActive(false);
         }
 
-        // พอลูกค้าเดินมาถึง ให้ไอคอนเตือนเด้งขึ้นมา
         if (movement != null)
         {
             if (movement.HasArrived)
@@ -97,7 +108,44 @@ public class CustomerInteraction : MonoBehaviour
             else
                 movement.OnArrived += ShowAlert;
         }
+
+        Debug.Log("CustomerInteraction Ready: " + gameObject.name, this);
     }
+    public void ConfigureCustomer(
+        CustomerData customer,
+        ItemData item,
+        Transform itemSpawnPoint,
+        Transform itemTargetPoint)
+    {
+        if (customer == null || item == null)
+        {
+            Debug.LogError("Missing Customer or Item Data!");
+            return;
+        }
+
+        customerMessage = customer.customerMessage;
+
+        if (movement == null)
+            movement = GetComponent<CustomerMovement>();
+
+        if (itemDelivery == null)
+            itemDelivery = GetComponent<ItemDelivery>();
+
+        if (itemDelivery != null)
+        {
+            itemDelivery.Configure(
+                item,
+                itemSpawnPoint,
+                itemTargetPoint
+            );
+        }
+        else
+        {
+            Debug.LogError("ItemDelivery is missing!");
+        }
+    }
+
+
 
     void OnDestroy()
     {
@@ -121,15 +169,27 @@ public class CustomerInteraction : MonoBehaviour
 
     void OnMouseEnter()
     {
-        if (!canInteract || orderAccepted || movement == null) return;
+        if (!canInteract || orderAccepted || movement == null)
+            return;
 
-        // ลูกค้าตื่นเต้นนิดหนึ่งเมื่อเอาเมาส์ชี้
         movement.TalkBounce(0.04f);
     }
 
+
     void OnMouseDown()
     {
-        if (!canInteract || orderAccepted) return;
+        Debug.Log(
+            "CUSTOMER CLICKED: " + gameObject.name +
+            " | canInteract: " + canInteract +
+            " | orderAccepted: " + orderAccepted,
+            this
+        );
+
+        if (!canInteract || orderAccepted)
+        {
+            Debug.Log("Customer click blocked!", this);
+            return;
+        }
 
         if (isTyping)
         {
@@ -137,10 +197,18 @@ public class CustomerInteraction : MonoBehaviour
             return;
         }
 
-        if (dialogueBubble.activeSelf) return;
+        if (dialogueBubble == null)
+        {
+            Debug.LogError("Dialogue Bubble is missing!", this);
+            return;
+        }
+
+        if (dialogueBubble.activeSelf)
+            return;
 
         OpenDialogue();
     }
+
 
     // =================================
     // ALERT ICON
@@ -354,22 +422,26 @@ public class CustomerInteraction : MonoBehaviour
 
     public void AcceptOrder()
     {
-        if (orderAccepted) return;
+        Debug.Log("AcceptOrder Called!", this);
+
+        if (orderAccepted)
+        {
+            Debug.Log("Order already accepted!", this);
+            return;
+        }
+
+        if (itemDelivery == null)
+        {
+            Debug.LogError("ItemDelivery is NOT assigned!", this);
+            return;
+        }
 
         orderAccepted = true;
         canInteract = false;
 
-        Debug.Log("Accept Order Clicked!");
+        Debug.Log("Accept Order Clicked!", this);
 
-        if (itemDelivery != null)
-        {
-            Debug.Log("ItemDelivery Found!");
-            itemDelivery.DeliverItem();
-        }
-        else
-        {
-            Debug.LogError("ItemDelivery is NOT assigned!");
-        }
+        itemDelivery.DeliverItem();
 
         if (movement != null)
             movement.Hop();
@@ -432,8 +504,40 @@ public class CustomerInteraction : MonoBehaviour
     }
 
     // =================================
+    // SAVE / RESTORE INTERACTION
+    // =================================
+
+    public bool GetOrderAcceptedState()
+    {
+        return orderAccepted;
+    }
+
+    public void RestoreInteractionState(bool savedOrderAccepted)
+    {
+        orderAccepted = savedOrderAccepted;
+        canInteract = !savedOrderAccepted;
+
+        // ถ้ารับออเดอร์ไปแล้ว ไม่ต้องแสดงไอคอนเตือน
+        if (savedOrderAccepted)
+        {
+            alertVisible = false;
+
+            if (alertIcon != null)
+                alertIcon.gameObject.SetActive(false);
+
+            if (dialogueBubble != null)
+                dialogueBubble.SetActive(false);
+
+            if (dialogueCanvasGroup != null)
+                dialogueCanvasGroup.alpha = 0f;
+        }
+    }
+
+    // =================================
     // HELPERS
     // =================================
+
+
 
     float EaseOutBack(float t)
     {

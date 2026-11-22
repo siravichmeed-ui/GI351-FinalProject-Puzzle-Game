@@ -273,6 +273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4173aa94871dc6d478aa070839247f2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemDisplay
+  spriteRenderer: {fileID: 590524102}
   floatHeight: 0.2
   floatSpeed: 1.5
   rotationAmount: 3

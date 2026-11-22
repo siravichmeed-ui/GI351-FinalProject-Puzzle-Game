@@ -6,6 +6,7 @@ public class CustomerMovement : MonoBehaviour
     [Header("Movement")]
     public Transform startPoint;
     public Transform stopPoint;
+    public Transform exitPoint;
     public float moveSpeed = 2f;
     [Tooltip("เวลาที่ใช้เร่งความเร็วตอนออกตัว")]
     public float accelTime = 0.5f;
@@ -37,6 +38,7 @@ public class CustomerMovement : MonoBehaviour
 
     // เรียกเมื่อลูกค้าเดินถึงจุดหยุด
     public event Action OnArrived;
+    public event Action OnExited;
 
     public bool HasArrived
     {
@@ -50,6 +52,7 @@ public class CustomerMovement : MonoBehaviour
 
     private bool isMoving = true;
     private bool hasArrived = false;
+    private bool isLeaving = false;
     private float walkTimer = 0f;
     private float currentSpeed = 0f;
     private int lastStepIndex = 0;
@@ -58,6 +61,7 @@ public class CustomerMovement : MonoBehaviour
     private float settleAmount = 0f;
     private float hopTimer = -1f;
     private float talkSquash = 0f;
+    private bool hasRestoredState = false;
 
     void Awake()
     {
@@ -71,13 +75,16 @@ public class CustomerMovement : MonoBehaviour
             audioSource.spatialBlend = 0f;
         }
     }
-
     void Start()
     {
+        if (hasRestoredState)
+            return;
+
         currentPosition = startPoint.position;
         transform.position = currentPosition;
         startRotation = transform.rotation;
     }
+
 
     void Update()
     {
@@ -90,7 +97,11 @@ public class CustomerMovement : MonoBehaviour
         // ---------- เดิน ----------
         if (isMoving)
         {
-            float dist = Vector3.Distance(currentPosition, stopPoint.position);
+            Vector3 targetPosition = isLeaving
+    ? exitPoint.position
+    : stopPoint.position;
+
+            float dist = Vector3.Distance(currentPosition, targetPosition);
 
             // ชะลอก่อนถึงจุดหมาย
             float slow = Mathf.SmoothStep(
@@ -104,8 +115,8 @@ public class CustomerMovement : MonoBehaviour
 
             currentPosition = Vector3.MoveTowards(
                 currentPosition,
-                stopPoint.position,
-                currentSpeed * dt
+                targetPosition,
+currentSpeed * dt
             );
 
             float ratio = Mathf.Clamp01(currentSpeed / Mathf.Max(moveSpeed, 0.01f));
@@ -127,9 +138,13 @@ public class CustomerMovement : MonoBehaviour
                 OnStep();
             }
 
-            if (Vector3.Distance(currentPosition, stopPoint.position) < 0.01f)
+            if (Vector3.Distance(currentPosition, targetPosition) < 0.01f)
             {
-                Arrive();
+                if (isLeaving)
+                    FinishExit();
+                else
+                    Arrive();
+
                 yOffset = 0f;
                 angle = 0f;
                 squash = 0f;
@@ -176,7 +191,9 @@ public class CustomerMovement : MonoBehaviour
         talkSquash = Mathf.Lerp(talkSquash, 0f, 1f - Mathf.Exp(-12f * dt));
 
         // ---------- Apply ----------
-        Vector3 basePos = isMoving ? currentPosition : stopPoint.position;
+        Vector3 basePos = isMoving
+    ? currentPosition
+    : (isLeaving ? exitPoint.position : stopPoint.position);
 
         transform.position = basePos + Vector3.up * yOffset;
         transform.rotation = startRotation * Quaternion.Euler(0f, 0f, angle);
@@ -223,12 +240,56 @@ public class CustomerMovement : MonoBehaviour
         settleAmount = amount;
         settleTimer = 0f;
     }
+    public void LeaveShop()
+    {
+        Debug.Log("LEAVE SHOP CALLED: " + gameObject.name, this);
+
+        if (isLeaving)
+        {
+            Debug.Log("Customer is already leaving!", this);
+            return;
+        }
+
+        if (exitPoint == null)
+        {
+            Debug.LogError(
+                "CustomerMovement: Exit Point is not assigned!",
+                this
+            );
+            return;
+        }
+
+        isLeaving = true;
+        isMoving = true;
+        currentSpeed = 0f;
+        currentPosition = transform.position;
+
+        Debug.Log(
+            "Customer started leaving. Exit: " + exitPoint.position,
+            this
+        );
+    }
+
+    void FinishExit()
+    {
+        if (!isLeaving)
+            return;
+
+        isMoving = false;
+        currentPosition = exitPoint.position;
+
+        Debug.Log("CUSTOMER EXIT FINISHED: " + gameObject.name, this);
+
+        if (OnExited != null)
+            OnExited();
+    }
 
     // =================================
     // PUBLIC (เรียกจากสคริปต์อื่น)
     // =================================
 
     // กระโดดดีใจ เช่น ตอนรับออเดอร์
+
     public void Hop()
     {
         hopTimer = 0f;
@@ -239,4 +300,92 @@ public class CustomerMovement : MonoBehaviour
     {
         talkSquash = amount;
     }
+
+    public CustomerMovementSaveData CaptureMovementState()
+    {
+        CustomerMovementSaveData data =
+            new CustomerMovementSaveData();
+
+        data.posX = transform.position.x;
+        data.posY = transform.position.y;
+        data.posZ = transform.position.z;
+
+        data.currentPosX = currentPosition.x;
+        data.currentPosY = currentPosition.y;
+        data.currentPosZ = currentPosition.z;
+
+        data.rotationX = startRotation.x;
+        data.rotationY = startRotation.y;
+        data.rotationZ = startRotation.z;
+        data.rotationW = startRotation.w;
+
+        data.scaleX = originalScale.x;
+        data.scaleY = originalScale.y;
+        data.scaleZ = originalScale.z;
+
+        data.isMoving = isMoving;
+        data.hasArrived = hasArrived;
+        data.isLeaving = isLeaving;
+
+        data.walkTimer = walkTimer;
+        data.currentSpeed = currentSpeed;
+        data.lastStepIndex = lastStepIndex;
+
+        data.settleTimer = settleTimer;
+        data.settleAmount = settleAmount;
+        data.hopTimer = hopTimer;
+        data.talkSquash = talkSquash;
+
+        return data;
+    }
+
+    public void RestoreMovementState(CustomerMovementSaveData data)
+    {
+        if (data == null)
+            return;
+
+        hasRestoredState = true;
+
+        transform.position = new Vector3(
+            data.posX,
+            data.posY,
+            data.posZ
+        );
+
+        currentPosition = new Vector3(
+            data.currentPosX,
+            data.currentPosY,
+            data.currentPosZ
+        );
+
+        startRotation = new Quaternion(
+            data.rotationX,
+            data.rotationY,
+            data.rotationZ,
+            data.rotationW
+        );
+
+        originalScale = new Vector3(
+            data.scaleX,
+            data.scaleY,
+            data.scaleZ
+        );
+
+        isMoving = data.isMoving;
+        hasArrived = data.hasArrived;
+        isLeaving = data.isLeaving;
+
+        walkTimer = data.walkTimer;
+        currentSpeed = data.currentSpeed;
+        lastStepIndex = data.lastStepIndex;
+
+        settleTimer = data.settleTimer;
+        settleAmount = data.settleAmount;
+        hopTimer = data.hopTimer;
+        talkSquash = data.talkSquash;
+
+        transform.rotation = startRotation;
+        transform.localScale = originalScale;
+    }
+
 }

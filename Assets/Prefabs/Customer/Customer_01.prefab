@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 591347361485735389}
   - component: {fileID: 4032579952179892561}
   - component: {fileID: 8469819447091585704}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BubbleBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 2551611198693188014}
   - component: {fileID: 6079567900008562067}
   - component: {fileID: 2433412740934691641}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -227,7 +227,7 @@ GameObject:
   - component: {fileID: 4136481651373063904}
   - component: {fileID: 2421872755915282321}
   - component: {fileID: 2271175752734154622}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: CustomerDialogue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -342,7 +342,7 @@ GameObject:
   - component: {fileID: 309507471064134445}
   - component: {fileID: 1932432976007879957}
   - component: {fileID: 5123707946852057326}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: AcceptButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -477,7 +477,7 @@ GameObject:
   - component: {fileID: 7125083384685886566}
   - component: {fileID: 195125183035111422}
   - component: {fileID: 2021646779823477923}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Customer_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -574,6 +574,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CustomerMovement
   startPoint: {fileID: 0}
   stopPoint: {fileID: 0}
+  exitPoint: {fileID: 0}
   moveSpeed: 2
   accelTime: 0.5
   slowDownDistance: 1.2
@@ -638,11 +639,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a657558f149e08f458870e1d4f110986, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemDelivery
-  cursedItem: {fileID: 0}
   spawnPoint: {fileID: 0}
   targetPoint: {fileID: 0}
+  workArea: {fileID: 0}
   deliveryDuration: 0.8
   arcHeight: 0.6
+  itemGravity: 1
 --- !u!61 &2021646779823477923
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -700,7 +702,7 @@ GameObject:
   - component: {fileID: 6855740801732792577}
   - component: {fileID: 8643720416409178923}
   - component: {fileID: 7015386097443215887}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: DialogueText
   m_TagString: Untagged
   m_Icon: {fileID: 0}

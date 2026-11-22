@@ -154,6 +154,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DraggableItem
   workArea: {fileID: 0}
+  itemID: 002
+  itemName: 002
+  cursedSprite: {fileID: -2389706291967646189, guid: 4d58b3693307965499a016f216da8393, type: 3}
+  cleanedSprite: {fileID: 5947358089969717315, guid: 4d58b3693307965499a016f216da8393, type: 3}
   openHandCursor: {fileID: 0}
   grabHandCursor: {fileID: 0}
   draggingSortingOrder: 20

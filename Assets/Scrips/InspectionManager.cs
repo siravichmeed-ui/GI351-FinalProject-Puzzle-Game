@@ -14,8 +14,8 @@ public class InspectionManager : MonoBehaviour
     [Header("Scene Settings")]
     public string shopSceneName = "ShopScene";
 
-    private bool isInspectionMode = false;
-    private bool isPuzzleOpened = false;
+    private bool isInspectionMode;
+    private bool isPuzzleOpened;
 
     private GameObject currentPuzzle;
     private PipeManager currentPipeManager;
@@ -26,9 +26,35 @@ public class InspectionManager : MonoBehaviour
 
     void Start()
     {
+        isInspectionMode = false;
+        isPuzzleOpened = false;
+
         if (cursePoint != null)
         {
             cursePoint.SetActive(false);
+        }
+
+        // ตรวจสอบว่ามี Item ส่งมาหรือไม่
+        if (!ItemSessionData.HasCurrentItem())
+        {
+            Debug.LogError(
+                "InspectionManager: No Item Received!"
+            );
+            return;
+        }
+
+        Debug.Log(
+            "Received Item: " +
+            ItemSessionData.CurrentItemName +
+            " | ID: " +
+            ItemSessionData.CurrentItemID
+        );
+
+        if (ItemSessionData.IsPuzzleSolved)
+        {
+            Debug.Log(
+                "This Item Puzzle has already been solved!"
+            );
         }
     }
 
@@ -38,7 +64,8 @@ public class InspectionManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q) && !isPuzzleOpened)
+        if (Input.GetKeyDown(KeyCode.Q) &&
+            !isPuzzleOpened)
         {
             ToggleInspectionMode();
         }
@@ -50,6 +77,18 @@ public class InspectionManager : MonoBehaviour
 
     public void ToggleInspectionMode()
     {
+        if (isPuzzleOpened)
+            return;
+
+        if (!ItemSessionData.HasCurrentItem())
+            return;
+
+        if (ItemSessionData.IsPuzzleSolved)
+        {
+            Debug.Log("This Item is already cleaned!");
+            return;
+        }
+
         isInspectionMode = !isInspectionMode;
 
         if (cursePoint != null)
@@ -73,18 +112,27 @@ public class InspectionManager : MonoBehaviour
         if (!isInspectionMode || isPuzzleOpened)
             return;
 
-        if (puzzlePrefab == null)
-        {
-            Debug.LogError("Puzzle Prefab is not assigned!");
-            return;
-        }
-
         if (!ItemSessionData.HasCurrentItem())
         {
             Debug.LogError("No Current Item Found!");
             return;
         }
 
+        if (ItemSessionData.IsPuzzleSolved)
+        {
+            Debug.Log("Item already solved!");
+            return;
+        }
+
+        if (puzzlePrefab == null)
+        {
+            Debug.LogError(
+                "Puzzle Prefab is not assigned!"
+            );
+            return;
+        }
+
+        // บันทึกว่าพบคำสาปแล้ว
         ItemSessionData.MarkCurseFound();
 
         isInspectionMode = false;
@@ -95,10 +143,12 @@ public class InspectionManager : MonoBehaviour
             cursePoint.SetActive(false);
         }
 
-        Vector3 spawnPosition = puzzleSpawnPoint != null
+        Vector3 spawnPosition =
+            puzzleSpawnPoint != null
             ? puzzleSpawnPoint.position
             : Vector3.zero;
 
+        // ใช้ Puzzle Prefab ตัวเดิมทุก Item
         currentPuzzle = Instantiate(
             puzzlePrefab,
             spawnPosition,
@@ -110,18 +160,25 @@ public class InspectionManager : MonoBehaviour
 
         if (currentPipeManager == null)
         {
-            Debug.LogError("PipeManager not found in Puzzle Prefab!");
+            Debug.LogError(
+                "PipeManager not found in Puzzle Prefab!"
+            );
 
             Destroy(currentPuzzle);
+
             currentPuzzle = null;
             isPuzzleOpened = false;
 
             return;
         }
 
-        currentPipeManager.OnPuzzleSolved += HandlePuzzleSolved;
+        currentPipeManager.OnPuzzleSolved +=
+            HandlePuzzleSolved;
 
-        Debug.Log("Puzzle Opened!");
+        Debug.Log(
+            "Puzzle Opened For: " +
+            ItemSessionData.CurrentItemName
+        );
     }
 
     // =====================================
@@ -133,17 +190,22 @@ public class InspectionManager : MonoBehaviour
         if (!isPuzzleOpened)
             return;
 
-        Debug.Log("Puzzle Solved Successfully!");
+        Debug.Log(
+            "Puzzle Solved: " +
+            ItemSessionData.CurrentItemName
+        );
 
-        // บันทึกสถานะไอเทม
+        // บันทึกความสำเร็จให้ Item ID ปัจจุบัน
         ItemSessionData.MarkPuzzleSolved();
 
-        // ปิด Puzzle Prefab
+        // ยกเลิก Event
         if (currentPipeManager != null)
         {
-            currentPipeManager.OnPuzzleSolved -= HandlePuzzleSolved;
+            currentPipeManager.OnPuzzleSolved -=
+                HandlePuzzleSolved;
         }
 
+        // ลบ Puzzle
         if (currentPuzzle != null)
         {
             Destroy(currentPuzzle);
@@ -154,10 +216,20 @@ public class InspectionManager : MonoBehaviour
 
         isPuzzleOpened = false;
 
-        // กลับไป ShopScene
-        Debug.Log("Returning to Shop Scene...");
-
+        // กลับ ShopScene
         SceneManager.LoadScene(shopSceneName);
     }
 
+    // =====================================
+    // CLEANUP
+    // =====================================
+
+    void OnDestroy()
+    {
+        if (currentPipeManager != null)
+        {
+            currentPipeManager.OnPuzzleSolved -=
+                HandlePuzzleSolved;
+        }
+    }
 }

@@ -186,7 +186,8 @@ public class WorkAreaClick : MonoBehaviour
             persistence.itemData,
             persistence.instanceID,
             currentItem.transform.position,
-            currentItem.transform.rotation
+            currentItem.transform.rotation,
+            persistence.customerID
         );
 
         ItemSessionData.SetCurrentItem(

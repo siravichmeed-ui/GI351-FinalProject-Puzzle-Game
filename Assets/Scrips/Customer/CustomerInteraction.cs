@@ -49,6 +49,7 @@ public class CustomerInteraction : MonoBehaviour
 
     private bool canInteract = true;
     private bool orderAccepted = false;
+    private bool isReturnCustomer = false;
     private bool isTyping = false;
 
     private Coroutine dialogueCoroutine;
@@ -115,7 +116,7 @@ public class CustomerInteraction : MonoBehaviour
         CustomerData customer,
         ItemData item,
         Transform itemSpawnPoint,
-        Transform itemTargetPoint)
+        System.Func<Vector3> itemTargetResolver)
     {
         if (customer == null || item == null)
         {
@@ -134,9 +135,10 @@ public class CustomerInteraction : MonoBehaviour
         if (itemDelivery != null)
         {
             itemDelivery.Configure(
+                customer,
                 item,
                 itemSpawnPoint,
-                itemTargetPoint
+                itemTargetResolver
             );
         }
         else
@@ -178,6 +180,8 @@ public class CustomerInteraction : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (isReturnCustomer)
+            return;
         Debug.Log(
             "CUSTOMER CLICKED: " + gameObject.name +
             " | canInteract: " + canInteract +
@@ -216,7 +220,8 @@ public class CustomerInteraction : MonoBehaviour
 
     void ShowAlert()
     {
-        if (alertIcon == null || orderAccepted || dialogueBubble.activeSelf) return;
+        if (alertIcon == null || orderAccepted) return;
+        if (dialogueBubble != null && dialogueBubble.activeSelf) return;
 
         if (alertCoroutine != null) StopCoroutine(alertCoroutine);
         alertCoroutine = StartCoroutine(AlertPopIn());
@@ -531,6 +536,18 @@ public class CustomerInteraction : MonoBehaviour
             if (dialogueCanvasGroup != null)
                 dialogueCanvasGroup.alpha = 0f;
         }
+    }
+    public void SetReturnCustomer()
+    {
+        isReturnCustomer = true;
+        canInteract = false;
+        orderAccepted = true;
+
+        if (dialogueBubble != null)
+            dialogueBubble.SetActive(false);
+
+        if (alertIcon != null)
+            alertIcon.gameObject.SetActive(false);
     }
 
     // =================================

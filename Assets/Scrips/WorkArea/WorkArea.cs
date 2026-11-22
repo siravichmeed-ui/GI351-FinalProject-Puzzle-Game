@@ -130,10 +130,6 @@ public class WorkArea : MonoBehaviour
         if (item == null)
             return false;
 
-        // ล้าง Reference ถ้า Item เดิมถูกทำลายไปแล้ว
-        if (currentItem == null)
-            currentItem = null;
-
         // ถ้ามี Item อื่นอยู่แล้ว ห้ามวางทับ
         if (currentItem != null && currentItem != item)
         {
@@ -209,6 +205,24 @@ public class WorkArea : MonoBehaviour
         Vector2 itemCenter = itemBounds.center;
 
         return areaCollider.OverlapPoint(itemCenter);
+    }
+
+    // =================================
+    // NEAREST POINT OUTSIDE (ดันสินค้าที่ตกทับออกไปรอข้างโต๊ะ)
+    // =================================
+
+    public Vector3 GetNearestOutsidePoint(Bounds itemBounds, float margin = 0.15f)
+    {
+        Bounds area = AreaBounds;
+        Vector3 center = itemBounds.center;
+
+        bool right = center.x >= area.center.x;
+
+        center.x = right
+            ? area.max.x + itemBounds.extents.x + margin
+            : area.min.x - itemBounds.extents.x - margin;
+
+        return center;
     }
 
     // =================================

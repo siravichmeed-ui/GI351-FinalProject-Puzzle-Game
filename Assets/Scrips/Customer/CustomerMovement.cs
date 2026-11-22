@@ -1,3 +1,4 @@
+
 using System;
 using UnityEngine;
 
@@ -8,21 +9,37 @@ public class CustomerMovement : MonoBehaviour
     public Transform stopPoint;
     public Transform exitPoint;
     public float moveSpeed = 2f;
-    [Tooltip("เวลาที่ใช้เร่งความเร็วตอนออกตัว")]
     public float accelTime = 0.5f;
-    [Tooltip("เริ่มชะลอเมื่อเหลือระยะเท่านี้ก่อนถึงจุดหยุด")]
     public float slowDownDistance = 1.2f;
     [Range(0.1f, 1f)] public float minSpeedRatio = 0.3f;
+
+    [Header("Warp Feel (ความเร็วแบบพุ่ง)")]
+    [Tooltip("คูณความเร็วตอนเดินเข้าไปที่ Stop Point")]
+    public float enterSpeedMultiplier = 3f;
+    [Tooltip("คูณความเร็วตอนเดินออกไปที่ Exit Point")]
+    public float exitSpeedMultiplier = 4f;
+    [Tooltip("คูณความเร็วตอนเดินมารับของคืน")]
+    public float returnSpeedMultiplier = 3f;
+    [Tooltip("เวลาเร่งความเร็ว (วินาที) เมื่อใช้ตัวคูณ > 1 — ยิ่งน้อยยิ่งพุ่งทันที")]
+    public float warpAccelTime = 0.12f;
+    [Tooltip("ตัวยืดตามแนวนอนตอนพุ่ง")]
+    [Range(0f, 0.5f)] public float dashStretch = 0.18f;
+    [Tooltip("ฝุ่นที่พ่นต่อวินาทีตอนพุ่ง")]
+    public float dashDustPerSecond = 40f;
 
     [Header("Walking Animation")]
     public float bobAmount = 0.04f;
     public float bobSpeed = 10f;
     public float swayAmount = 3f;
     public float swaySpeed = 8f;
-    [Tooltip("ยืด/ยุบตัวตามจังหวะก้าวเท้า")]
     public float stepSquash = 0.05f;
 
-    [Header("Footsteps (optional)")]
+    [Header("Idle (ยืนรอ)")]
+    [Tooltip("ลูกค้าหายใจเบาๆ ตอนยืนรอ ไม่นิ่งเป็นรูปปั้น")]
+    public float idleBreathAmount = 0.015f;
+    public float idleBreathSpeed = 2.2f;
+
+    [Header("Footsteps")]
     public ParticleSystem stepDust;
     public int dustPerStep = 2;
     public AudioClip stepSfx;
@@ -36,14 +53,13 @@ public class CustomerMovement : MonoBehaviour
     public float settleFrequency = 2.5f;
     public float settleDuration = 0.6f;
 
-    // เรียกเมื่อลูกค้าเดินถึงจุดหยุด
     public event Action OnArrived;
     public event Action OnExited;
+    public event Action OnReturnArrived;
 
-    public bool HasArrived
-    {
-        get { return hasArrived; }
-    }
+
+    public bool HasArrived => hasArrived;
+    public bool IsLeaving => isLeaving;
 
     private Vector3 currentPosition;
     private Quaternion startRotation;
@@ -51,23 +67,29 @@ public class CustomerMovement : MonoBehaviour
     private AudioSource audioSource;
 
     private bool isMoving = true;
-    private bool hasArrived = false;
-    private bool isLeaving = false;
-    private float walkTimer = 0f;
-    private float currentSpeed = 0f;
-    private int lastStepIndex = 0;
+    private bool hasArrived;
+    private bool isLeaving;
+    private bool isReturning;
+    private bool hasRestoredState;
 
+    private Transform customTarget;
+
+    private float walkTimer;
+    private float currentSpeed;
+    private int lastStepIndex;
     private float settleTimer = -1f;
-    private float settleAmount = 0f;
+    private float settleAmount;
     private float hopTimer = -1f;
-    private float talkSquash = 0f;
-    private bool hasRestoredState = false;
+    private float talkSquash;
 
-    void Awake()
+    private void Awake()
     {
         originalScale = transform.localScale;
+        startRotation = transform.rotation;
+        idlePhase = UnityEngine.Random.value * Mathf.PI * 2f;
 
         audioSource = GetComponent<AudioSource>();
+
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
@@ -75,83 +97,143 @@ public class CustomerMovement : MonoBehaviour
             audioSource.spatialBlend = 0f;
         }
     }
-    void Start()
+
+    private void Start()
     {
         if (hasRestoredState)
             return;
 
-        currentPosition = startPoint.position;
-        transform.position = currentPosition;
-        startRotation = transform.rotation;
+        if (startPoint != null)
+        {
+            currentPosition = startPoint.position;
+            transform.position = currentPosition;
+        }
     }
 
-
-    void Update()
+    private void Update()
     {
         float dt = Time.deltaTime;
 
-        float squash = 0f;   // + = ยืดแนวตั้ง, - = ยุบแบนกว้าง
+        float squash = 0f;
+        float stretch = 0f;
         float yOffset = 0f;
         float angle = 0f;
 
-        // ---------- เดิน ----------
         if (isMoving)
         {
-            Vector3 targetPosition = isLeaving
-    ? exitPoint.position
-    : stopPoint.position;
+            Transform target = GetMovementTarget();
 
-            float dist = Vector3.Distance(currentPosition, targetPosition);
-
-            // ชะลอก่อนถึงจุดหมาย
-            float slow = Mathf.SmoothStep(
-                minSpeedRatio, 1f,
-                Mathf.Clamp01(dist / Mathf.Max(slowDownDistance, 0.01f))
-            );
-
-            float targetSpeed = moveSpeed * slow;
-            float accel = moveSpeed / Mathf.Max(accelTime, 0.01f);
-            currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, accel * dt);
-
-            currentPosition = Vector3.MoveTowards(
-                currentPosition,
-                targetPosition,
-currentSpeed * dt
-            );
-
-            float ratio = Mathf.Clamp01(currentSpeed / Mathf.Max(moveSpeed, 0.01f));
-            walkTimer += dt * ratio;
-
-            float bobNorm = Mathf.Abs(Mathf.Sin(walkTimer * bobSpeed));
-
-            yOffset = bobNorm * bobAmount * ratio;
-            angle = Mathf.Sin(walkTimer * swaySpeed) * swayAmount * ratio;
-
-            // เท้าแตะพื้น = ยุบ, ลอยสูงสุด = ยืด
-            squash = (bobNorm - 0.5f) * 2f * stepSquash * ratio;
-
-            // ตรวจจังหวะก้าว (ทุกครั้งที่ sin ข้ามศูนย์)
-            int stepIndex = Mathf.FloorToInt(walkTimer * bobSpeed / Mathf.PI);
-            if (stepIndex != lastStepIndex)
+            if (target != null)
             {
-                lastStepIndex = stepIndex;
-                OnStep();
-            }
+                Vector3 targetPosition = target.position;
+                float dist = Vector3.Distance(currentPosition, targetPosition);
 
-            if (Vector3.Distance(currentPosition, targetPosition) < 0.01f)
-            {
-                if (isLeaving)
-                    FinishExit();
-                else
-                    Arrive();
+                float slow = Mathf.SmoothStep(
+                    minSpeedRatio,
+                    1f,
+                    Mathf.Clamp01(dist / Mathf.Max(slowDownDistance, 0.01f))
+                );
 
-                yOffset = 0f;
-                angle = 0f;
-                squash = 0f;
+                float speedMul = GetSpeedMultiplier();
+                float topSpeed = moveSpeed * speedMul;
+                float accelT = speedMul > 1.01f ? warpAccelTime : accelTime;
+
+                float targetSpeed = topSpeed * slow;
+                float accel = topSpeed / Mathf.Max(accelT, 0.01f);
+
+                currentSpeed = Mathf.MoveTowards(
+                    currentSpeed,
+                    targetSpeed,
+                    accel * dt
+                );
+
+                currentPosition = Vector3.MoveTowards(
+                    currentPosition,
+                    targetPosition,
+                    currentSpeed * dt
+                );
+
+                float ratio = Mathf.Clamp01(
+                    currentSpeed / Mathf.Max(topSpeed, 0.01f)
+                );
+
+                // ก้าวถี่ขึ้นตามความเร็ว แต่ไม่ถี่เท่าตัวคูณเต็มๆ
+                walkTimer += dt * ratio * Mathf.Sqrt(speedMul);
+
+                // ยืดตัว + พ่นฝุ่นตอนพุ่ง
+                if (speedMul > 1.01f)
+                {
+                    float dash = ratio * Mathf.Clamp01(speedMul - 1f);
+
+                    stretch = dash * dashStretch;
+
+                    if (stepDust != null && dash > 0.5f)
+                    {
+                        dustAccum += dashDustPerSecond * dt;
+                        int emit = Mathf.FloorToInt(dustAccum);
+
+                        if (emit > 0)
+                        {
+                            stepDust.Emit(emit);
+                            dustAccum -= emit;
+                        }
+                    }
+                }
+
+                float bobNorm = Mathf.Abs(
+                    Mathf.Sin(walkTimer * bobSpeed)
+                );
+
+                yOffset = bobNorm * bobAmount * ratio;
+                angle = Mathf.Sin(walkTimer * swaySpeed) * swayAmount * ratio;
+                squash = (bobNorm - 0.5f) * 2f * stepSquash * ratio;
+
+                int stepIndex = Mathf.FloorToInt(
+                    walkTimer * bobSpeed / Mathf.PI
+                );
+
+                if (stepIndex != lastStepIndex)
+                {
+                    lastStepIndex = stepIndex;
+                    OnStep();
+                }
+
+                if (Vector3.Distance(currentPosition, targetPosition) < 0.01f)
+                {
+                    currentPosition = targetPosition;
+                    isMoving = false;
+                    currentSpeed = 0f;
+
+                    if (isLeaving)
+                    {
+                        FinishExit();
+                    }
+                    else if (isReturning)
+                    {
+                        isReturning = false;
+                        customTarget = null;
+                        hasArrived = true;
+                        StartSettle(arrivalSquash);
+
+                        if (stepDust != null)
+                            stepDust.Emit(dustPerStep * 3);
+
+                        OnReturnArrived?.Invoke();
+                    }
+                    else
+                    {
+                        hasArrived = true;
+                        StartSettle(arrivalSquash);
+
+                        if (stepDust != null)
+                            stepDust.Emit(dustPerStep * 3);
+
+                        OnArrived?.Invoke();
+                    }
+                }
             }
         }
 
-        // ---------- กระโดด (Hop) ----------
         if (hopTimer >= 0f)
         {
             hopTimer += dt;
@@ -165,11 +247,10 @@ currentSpeed * dt
             else
             {
                 yOffset += hopHeight * 4f * t * (1f - t);
-                squash += Mathf.Sin(t * Mathf.PI) * 0.08f; // ยืดตัวตอนลอย
+                squash += Mathf.Sin(t * Mathf.PI) * 0.08f;
             }
         }
 
-        // ---------- ลงพื้นแล้วสปริง ----------
         if (settleTimer >= 0f)
         {
             settleTimer += dt;
@@ -181,121 +262,135 @@ currentSpeed * dt
             else
             {
                 squash += -settleAmount
-                          * Mathf.Exp(-settleDecay * settleTimer)
-                          * Mathf.Cos(2f * Mathf.PI * settleFrequency * settleTimer);
+                    * Mathf.Exp(-settleDecay * settleTimer)
+                    * Mathf.Cos(2f * Mathf.PI * settleFrequency * settleTimer);
             }
         }
 
-        // ---------- เด้งตอนพูด ----------
+        // หายใจตอนยืนรอที่จุดหยุด
+        if (!isMoving && hasArrived)
+        {
+            squash += Mathf.Sin(Time.time * idleBreathSpeed + idlePhase) *
+                      idleBreathAmount;
+        }
+
         squash += talkSquash;
-        talkSquash = Mathf.Lerp(talkSquash, 0f, 1f - Mathf.Exp(-12f * dt));
+        talkSquash = Mathf.Lerp(
+            talkSquash,
+            0f,
+            1f - Mathf.Exp(-12f * dt)
+        );
 
-        // ---------- Apply ----------
-        Vector3 basePos = isMoving
-    ? currentPosition
-    : (isLeaving ? exitPoint.position : stopPoint.position);
-
-        transform.position = basePos + Vector3.up * yOffset;
+        transform.position = currentPosition + Vector3.up * yOffset;
         transform.rotation = startRotation * Quaternion.Euler(0f, 0f, angle);
+
         transform.localScale = new Vector3(
-            originalScale.x * (1f - squash),
-            originalScale.y * (1f + squash),
+            originalScale.x * (1f - squash) * (1f + stretch),
+            originalScale.y * (1f + squash) * (1f - stretch * 0.5f),
             originalScale.z
         );
     }
 
-    // =================================
-    // EVENTS
-    // =================================
+    private float dustAccum;
+    private float idlePhase;
 
-    void OnStep()
+    private float GetSpeedMultiplier()
+    {
+        if (isLeaving)
+            return Mathf.Max(exitSpeedMultiplier, 0.1f);
+
+        if (isReturning)
+            return Mathf.Max(returnSpeedMultiplier, 0.1f);
+
+        return Mathf.Max(enterSpeedMultiplier, 0.1f);
+    }
+
+    private Transform GetMovementTarget()
+    {
+        if (customTarget != null)
+            return customTarget;
+
+        if (isLeaving)
+            return exitPoint;
+
+        if (isReturning)
+            return returnTarget;
+
+        return stopPoint;
+    }
+
+    private Transform returnTarget;
+
+    private void OnStep()
     {
         if (stepDust != null && dustPerStep > 0)
             stepDust.Emit(dustPerStep);
 
-        if (stepSfx != null)
+        if (stepSfx != null && audioSource != null)
         {
             audioSource.pitch = UnityEngine.Random.Range(0.9f, 1.1f);
             audioSource.PlayOneShot(stepSfx, stepVolume);
         }
     }
 
-    void Arrive()
-    {
-        isMoving = false;
-        hasArrived = true;
-        currentPosition = stopPoint.position;
-
-        StartSettle(arrivalSquash);
-
-        if (stepDust != null)
-            stepDust.Emit(dustPerStep * 3);
-
-        if (OnArrived != null)
-            OnArrived();
-    }
-
-    void StartSettle(float amount)
+    private void StartSettle(float amount)
     {
         settleAmount = amount;
         settleTimer = 0f;
     }
+
     public void LeaveShop()
     {
-        Debug.Log("LEAVE SHOP CALLED: " + gameObject.name, this);
-
-        if (isLeaving)
-        {
-            Debug.Log("Customer is already leaving!", this);
+        if (isLeaving || exitPoint == null)
             return;
-        }
-
-        if (exitPoint == null)
-        {
-            Debug.LogError(
-                "CustomerMovement: Exit Point is not assigned!",
-                this
-            );
-            return;
-        }
 
         isLeaving = true;
+        isReturning = false;
+        isMoving = true;
+        hasArrived = false;
+        customTarget = null;
+        currentSpeed = 0f;
+    }
+
+    public void ReturnToShop(Transform destination)
+    {
+        if (destination == null)
+        {
+            Debug.LogError("Return destination is missing!", this);
+            return;
+        }
+
+        isLeaving = false;
+        isReturning = true;
+        hasArrived = false;
+
+        returnTarget = destination;
+        customTarget = destination;
+
         isMoving = true;
         currentSpeed = 0f;
         currentPosition = transform.position;
-
-        Debug.Log(
-            "Customer started leaving. Exit: " + exitPoint.position,
-            this
-        );
     }
 
-    void FinishExit()
+    public void WalkToPickupPoint(Transform destination)
     {
-        if (!isLeaving)
-            return;
+        ReturnToShop(destination);
+    }
 
+    private void FinishExit()
+    {
         isMoving = false;
+        isLeaving = false;
         currentPosition = exitPoint.position;
 
-        Debug.Log("CUSTOMER EXIT FINISHED: " + gameObject.name, this);
-
-        if (OnExited != null)
-            OnExited();
+        OnExited?.Invoke();
     }
-
-    // =================================
-    // PUBLIC (เรียกจากสคริปต์อื่น)
-    // =================================
-
-    // กระโดดดีใจ เช่น ตอนรับออเดอร์
 
     public void Hop()
     {
         hopTimer = 0f;
     }
 
-    // ตัวเด้งเล็กน้อย เช่น ตอนพูด / เอาเมาส์ชี้
     public void TalkBounce(float amount)
     {
         talkSquash = amount;
@@ -303,8 +398,7 @@ currentSpeed * dt
 
     public CustomerMovementSaveData CaptureMovementState()
     {
-        CustomerMovementSaveData data =
-            new CustomerMovementSaveData();
+        CustomerMovementSaveData data = new CustomerMovementSaveData();
 
         data.posX = transform.position.x;
         data.posY = transform.position.y;
@@ -326,6 +420,7 @@ currentSpeed * dt
         data.isMoving = isMoving;
         data.hasArrived = hasArrived;
         data.isLeaving = isLeaving;
+        data.isReturning = isReturning;
 
         data.walkTimer = walkTimer;
         data.currentSpeed = currentSpeed;
@@ -347,9 +442,7 @@ currentSpeed * dt
         hasRestoredState = true;
 
         transform.position = new Vector3(
-            data.posX,
-            data.posY,
-            data.posZ
+            data.posX, data.posY, data.posZ
         );
 
         currentPosition = new Vector3(
@@ -366,14 +459,17 @@ currentSpeed * dt
         );
 
         originalScale = new Vector3(
-            data.scaleX,
-            data.scaleY,
-            data.scaleZ
+            data.scaleX, data.scaleY, data.scaleZ
         );
 
         isMoving = data.isMoving;
         hasArrived = data.hasArrived;
         isLeaving = data.isLeaving;
+        isReturning = data.isReturning;
+
+        // The manager configures returnTarget before restoring this state.
+        // Clear the custom target when the customer is already walking out.
+        customTarget = isReturning ? returnTarget : null;
 
         walkTimer = data.walkTimer;
         currentSpeed = data.currentSpeed;
@@ -383,9 +479,5 @@ currentSpeed * dt
         settleAmount = data.settleAmount;
         hopTimer = data.hopTimer;
         talkSquash = data.talkSquash;
-
-        transform.rotation = startRotation;
-        transform.localScale = originalScale;
     }
-
 }

@@ -36,7 +36,7 @@ public class ShopItemRestore : MonoBehaviour
             return;
 
         if (workArea == null)
-            workArea = FindObjectOfType<WorkArea>();
+            workArea = FindFirstObjectByType<WorkArea>();
 
         if (workArea == null)
         {
@@ -82,6 +82,7 @@ public class ShopItemRestore : MonoBehaviour
                 restoredItem.AddComponent<ItemPersistenceData>();
         }
 
+        persistence.customerID = ItemSessionData.PendingCustomerID;
         persistence.itemData = data;
         persistence.instanceID = instanceID;
         persistence.restoredOnBoard = true;

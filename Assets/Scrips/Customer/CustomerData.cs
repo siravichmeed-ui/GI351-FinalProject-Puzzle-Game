@@ -15,10 +15,12 @@ public class CustomerData : ScriptableObject
     [TextArea(2, 4)]
     public string customerMessage;
 
+    [Header("Return Reward")]
+    public int returnReward = 100;
+
     [Header("Customer Prefab")]
     public GameObject customerPrefab;
 
     [Header("Possible Items")]
-    public List<ItemData> possibleItems =
-        new List<ItemData>();
+    public List<ItemData> possibleItems = new List<ItemData>();
 }

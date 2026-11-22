@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using UnityEngine;
@@ -7,6 +6,7 @@ public class ItemDelivery : MonoBehaviour
 {
     [Header("Delivery Points")]
     public Transform spawnPoint;
+    [Tooltip("ใช้สำรองเมื่อ CustomerSpawnManager ไม่ได้ส่งตำแหน่งมาให้")]
     public Transform targetPoint;
 
     [Header("Work Area")]
@@ -15,82 +15,80 @@ public class ItemDelivery : MonoBehaviour
     [Header("Animation")]
     public float deliveryDuration = 0.8f;
     public float arcHeight = 0.6f;
+    [Tooltip("องศาที่สินค้าหมุนส่ายระหว่างลอยมา")]
+    public float spinDegrees = 12f;
 
     [Header("Physics")]
     public float itemGravity = 1f;
 
+    public Action OnDeliveryCompleted;
+
+    /// <summary>เรียกทันทีที่สินค้าถูกสร้าง (ส่ง instanceID)</summary>
+    public Action<string> OnItemSpawned;
+
     private ItemData selectedItem;
+    private string ownerCustomerID;
+    private Func<Vector3> targetResolver;
+
     private GameObject spawnedItem;
     private string spawnedItemInstanceID;
+    private Vector3 deliveryTarget;
 
     private bool hasDelivered;
+    private Collider2D[] customerColliders;
+
     // =====================================
     // SAVE / RESTORE
     // =====================================
 
-    public bool HasDelivered()
-    {
-        return hasDelivered;
-    }
-    public string GetDeliveredItemInstanceID()
-    {
-        return spawnedItemInstanceID;
-    }
-    public void RestoreDeliveredItem(
-    GameObject restoredItem,
-    string instanceID)
-    {
-        if (restoredItem == null)
-        {
-            Debug.LogWarning("Restore Delivered Item: Item is null.");
-            return;
-        }
+    public bool HasDelivered() => hasDelivered;
 
-        spawnedItem = restoredItem;
-        spawnedItemInstanceID = instanceID;
-
-        // ตั้งค่าไม่ให้ Item ชนกับ Collider ของลูกค้า
-        IgnoreCustomerCollision();
-
-        Debug.Log(
-            "Delivered Item Reconnected: " + instanceID
-        );
-    }
+    public string GetDeliveredItemInstanceID() => spawnedItemInstanceID;
 
     public void RestoreDeliveryState(bool delivered)
     {
         hasDelivered = delivered;
     }
 
-    private Collider2D[] customerColliders;
+    public void RestoreDeliveredItem(GameObject restoredItem, string instanceID)
+    {
+        spawnedItem = restoredItem;
+        spawnedItemInstanceID = instanceID;
 
-    public Action OnDeliveryCompleted;
+        if (restoredItem == null)
+        {
+            Debug.LogWarning("Restore Delivered Item: item object is missing.");
+            return;
+        }
+
+        IgnoreCustomerCollision();
+    }
 
     // =====================================
     // CONFIGURE
     // =====================================
 
     public void Configure(
+        CustomerData customer,
         ItemData item,
         Transform spawn,
-        Transform target)
+        Func<Vector3> targetPositionResolver)
     {
         selectedItem = item;
+        ownerCustomerID = customer != null ? customer.customerID : string.Empty;
         spawnPoint = spawn;
-        targetPoint = target;
+        targetResolver = targetPositionResolver;
 
         hasDelivered = false;
 
-        // เก็บ Collider ของ Customer และลูกทั้งหมด
-        customerColliders =
-            GetComponentsInChildren<Collider2D>(true);
+        customerColliders = GetComponentsInChildren<Collider2D>(true);
 
         if (workArea == null)
-            workArea = FindObjectOfType<WorkArea>();
+            workArea = FindFirstObjectByType<WorkArea>();
     }
 
     // =====================================
-    // DELIVER ITEM
+    // DELIVER
     // =====================================
 
     public void DeliverItem()
@@ -100,14 +98,13 @@ public class ItemDelivery : MonoBehaviour
 
         if (selectedItem == null ||
             selectedItem.itemPrefab == null ||
-            spawnPoint == null ||
-            targetPoint == null)
+            spawnPoint == null)
         {
-            Debug.LogError(
-                "ItemDelivery: Missing Item or Delivery Points!"
-            );
+            Debug.LogError("ItemDelivery: Missing Item or Spawn Point!");
             return;
         }
+
+        deliveryTarget = ResolveTarget();
 
         hasDelivered = true;
 
@@ -118,67 +115,67 @@ public class ItemDelivery : MonoBehaviour
         );
 
         SetupSpawnedItem();
-
         IgnoreCustomerCollision();
 
+        OnItemSpawned?.Invoke(spawnedItemInstanceID);
+
         StartCoroutine(DeliveryAnimation());
+    }
+
+    private Vector3 ResolveTarget()
+    {
+        if (targetResolver != null)
+            return targetResolver();
+
+        if (targetPoint != null)
+            return targetPoint.position;
+
+        return spawnPoint.position + Vector3.down;
     }
 
     // =====================================
     // SETUP SPAWNED ITEM
     // =====================================
 
-    void SetupSpawnedItem()
+    private void SetupSpawnedItem()
     {
-        if (spawnedItem == null)
-            return;
-
         ItemPersistenceData persistence =
             spawnedItem.GetComponent<ItemPersistenceData>();
 
-
         if (persistence == null)
-        {
-            persistence =
-                spawnedItem.AddComponent<ItemPersistenceData>();
-        }
+            persistence = spawnedItem.AddComponent<ItemPersistenceData>();
 
-        // สร้าง Instance ID ใหม่ทุกครั้ง
-        persistence.Initialize(selectedItem);
+        // สินค้าทุกชิ้นได้ instanceID ใหม่ + จำเจ้าของ (customerID) ไว้กับตัว
+        persistence.Initialize(ownerCustomerID, selectedItem);
         spawnedItemInstanceID = persistence.instanceID;
 
-        // ลงทะเบียนสถานะใหม่
-        ItemSessionData.RegisterNewItem(
-            persistence.instanceID
-        );
+        ItemSessionData.RegisterNewItem(persistence.instanceID);
 
-        // ตั้ง Sprite เริ่มต้นเป็น Cursed
-        SpriteRenderer sr =
-            spawnedItem.GetComponent<SpriteRenderer>();
+        SpriteRenderer sr = spawnedItem.GetComponent<SpriteRenderer>();
 
         if (sr == null)
             sr = spawnedItem.GetComponentInChildren<SpriteRenderer>();
 
         if (sr != null)
-        {
             sr.sprite = selectedItem.cursedSprite;
-        }
 
-        DraggableItem draggable =
-            spawnedItem.GetComponent<DraggableItem>();
+        DraggableItem draggable = spawnedItem.GetComponent<DraggableItem>();
 
         if (draggable == null)
         {
-            Debug.LogError(
-                "Item Prefab needs DraggableItem!"
-            );
+            Debug.LogError("Item Prefab needs DraggableItem!");
             return;
         }
 
         draggable.workArea = workArea;
+        draggable.itemID = selectedItem.itemID;
+        draggable.itemName = selectedItem.itemName;
+        draggable.cursedSprite = selectedItem.cursedSprite;
+        draggable.cleanedSprite = selectedItem.cleanedSprite;
 
         Debug.Log(
             "New Item: " + selectedItem.itemName +
+            " | Owner: " + ownerCustomerID +
             " | Type: " + selectedItem.itemID +
             " | Instance: " + persistence.instanceID
         );
@@ -188,65 +185,50 @@ public class ItemDelivery : MonoBehaviour
     // IGNORE CUSTOMER COLLISION
     // =====================================
 
-    void IgnoreCustomerCollision()
+    private void IgnoreCustomerCollision()
     {
-        if (spawnedItem == null)
+        if (spawnedItem == null || customerColliders == null)
             return;
 
         Collider2D[] itemColliders =
             spawnedItem.GetComponentsInChildren<Collider2D>(true);
 
-        if (customerColliders == null)
-            return;
-
         foreach (Collider2D customerCollider in customerColliders)
         {
-            if (customerCollider == null ||
-                !customerCollider.enabled)
+            if (customerCollider == null || !customerCollider.enabled)
                 continue;
 
             foreach (Collider2D itemCollider in itemColliders)
             {
-                if (itemCollider == null ||
-                    !itemCollider.enabled)
+                if (itemCollider == null || !itemCollider.enabled)
                     continue;
 
-                Physics2D.IgnoreCollision(
-                    customerCollider,
-                    itemCollider,
-                    true
-                );
+                Physics2D.IgnoreCollision(customerCollider, itemCollider, true);
             }
         }
-
-        Debug.Log(
-            "Customer and delivered Item collision ignored."
-        );
     }
 
     // =====================================
     // DELIVERY ANIMATION
     // =====================================
 
-    IEnumerator DeliveryAnimation()
+    private IEnumerator DeliveryAnimation()
     {
         if (spawnedItem == null)
             yield break;
 
-        Rigidbody2D rb =
-            spawnedItem.GetComponent<Rigidbody2D>();
+        Rigidbody2D rb = spawnedItem.GetComponent<Rigidbody2D>();
 
         if (rb != null)
         {
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
-
             rb.gravityScale = 0f;
             rb.bodyType = RigidbodyType2D.Kinematic;
         }
 
         Vector3 startPosition = spawnPoint.position;
-        Vector3 endPosition = targetPoint.position;
+        Vector3 endPosition = deliveryTarget;
 
         float timer = 0f;
 
@@ -257,22 +239,17 @@ public class ItemDelivery : MonoBehaviour
 
             timer += Time.deltaTime;
 
-            float t = Mathf.Clamp01(
-                timer / deliveryDuration
-            );
-
+            float t = Mathf.Clamp01(timer / deliveryDuration);
             float smoothT = Mathf.SmoothStep(0f, 1f, t);
 
-            Vector3 position = Vector3.Lerp(
-                startPosition,
-                endPosition,
-                smoothT
-            );
-
-            position.y +=
-                Mathf.Sin(t * Mathf.PI) * arcHeight;
+            Vector3 position = Vector3.Lerp(startPosition, endPosition, smoothT);
+            position.y += Mathf.Sin(t * Mathf.PI) * arcHeight;
 
             spawnedItem.transform.position = position;
+
+            spawnedItem.transform.rotation = Quaternion.Euler(
+                0f, 0f, Mathf.Sin(t * Mathf.PI * 2f) * spinDegrees
+            );
 
             yield return null;
         }
@@ -281,6 +258,7 @@ public class ItemDelivery : MonoBehaviour
             yield break;
 
         spawnedItem.transform.position = endPosition;
+        spawnedItem.transform.rotation = Quaternion.identity;
 
         if (rb != null)
         {
@@ -288,14 +266,14 @@ public class ItemDelivery : MonoBehaviour
             rb.gravityScale = itemGravity;
         }
 
-        // รอให้ Item ตกถึงโต๊ะ
+        // รอให้สินค้าตกถึงโต๊ะ
+        // (การลงทะเบียน WorkArea ทำโดย DraggableItem ตอนลงจอด —
+        //  ถ้า WorkArea ว่างก็ลงทะเบียน ถ้าไม่ว่างสินค้าจะถูกดันออกมารอ)
         float waitTimer = 0f;
 
-        while (spawnedItem != null &&
-               waitTimer < 3f)
+        while (spawnedItem != null && waitTimer < 3f)
         {
-            DraggableItem draggable =
-                spawnedItem.GetComponent<DraggableItem>();
+            DraggableItem draggable = spawnedItem.GetComponent<DraggableItem>();
 
             if (draggable != null && draggable.HasLanded)
                 break;
@@ -304,21 +282,6 @@ public class ItemDelivery : MonoBehaviour
 
             yield return null;
         }
-
-        // ลงทะเบียน WorkArea ถ้า Item อยู่ในพื้นที่
-        if (spawnedItem != null && workArea != null)
-        {
-            Collider2D itemCollider =
-                spawnedItem.GetComponent<Collider2D>();
-
-            if (itemCollider != null &&
-                workArea.IsInsideArea(itemCollider.bounds))
-            {
-                workArea.TryPlaceItem(spawnedItem);
-            }
-        }
-
-        Debug.Log("Delivery Completed!");
 
         OnDeliveryCompleted?.Invoke();
     }

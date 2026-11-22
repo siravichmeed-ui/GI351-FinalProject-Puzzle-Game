@@ -23,10 +23,24 @@ public static class ItemSessionData
     public static ItemData PendingItemData { get; private set; }
     public static string PendingInstanceID { get; private set; }
 
+    public static string PendingCustomerID { get; private set; }
     public static Vector3 PendingItemPosition { get; private set; }
     public static Quaternion PendingItemRotation { get; private set; }
 
     public static bool HasPendingWorkAreaItem { get; private set; }
+
+    // สินค้าที่เพิ่งทำ Puzzle เสร็จ (ใช้เล่นเอฟเฟกต์ฉลองตอนกลับมาที่ร้าน)
+    public static string JustSolvedInstanceID { get; private set; }
+
+    public static bool ConsumeJustSolved(string instanceID)
+    {
+        if (string.IsNullOrEmpty(JustSolvedInstanceID) ||
+            JustSolvedInstanceID != instanceID)
+            return false;
+
+        JustSolvedInstanceID = null;
+        return true;
+    }
 
     // =====================================
     // SAVE DATA
@@ -223,8 +237,13 @@ public static class ItemSessionData
             };
         }
 
+        bool wasSolved = progress[instanceID].puzzleSolved;
+
         progress[instanceID].curseFound = true;
         progress[instanceID].puzzleSolved = true;
+
+        if (!wasSolved)
+            JustSolvedInstanceID = instanceID;
 
         if (CurrentItemInstanceID == instanceID)
         {
@@ -290,7 +309,8 @@ public static class ItemSessionData
         ItemData data,
         string instanceID,
         Vector3 position,
-        Quaternion rotation)
+        Quaternion rotation,
+        string customerID = "")
     {
         if (data == null ||
             string.IsNullOrEmpty(instanceID))
@@ -301,6 +321,7 @@ public static class ItemSessionData
 
         PendingItemData = data;
         PendingInstanceID = instanceID;
+        PendingCustomerID = customerID;
 
         PendingItemPosition = position;
         PendingItemRotation = rotation;
@@ -316,10 +337,67 @@ public static class ItemSessionData
     {
         PendingItemData = null;
         PendingInstanceID = null;
+        PendingCustomerID = null;
 
         HasPendingWorkAreaItem = false;
     }
 
+
+    // =====================================
+    // CLEANUP (กัน PlayerPrefs โตไม่หยุด)
+    // =====================================
+
+    /// <summary>ลบความคืบหน้าของสินค้า 1 ชิ้น (เรียกเมื่อลูกค้ารับของไปแล้ว)</summary>
+    public static void RemoveProgress(string instanceID)
+    {
+        LoadProgress();
+
+        if (string.IsNullOrEmpty(instanceID))
+            return;
+
+        if (progress.Remove(instanceID))
+            SaveProgress();
+
+        if (CurrentItemInstanceID == instanceID)
+        {
+            CurrentItemInstanceID = null;
+            CurrentItemID = null;
+            CurrentItemName = null;
+            CurrentItemSprite = null;
+            IsCurseFound = false;
+            IsPuzzleSolved = false;
+        }
+    }
+
+    /// <summary>ลบความคืบหน้าของทุกชิ้นที่ไม่อยู่ใน keep (ใช้ล้างของค้างหลังโหลดเซฟ)</summary>
+    public static int PruneExcept(ICollection<string> keep)
+    {
+        LoadProgress();
+
+        List<string> remove = new List<string>();
+
+        foreach (string id in progress.Keys)
+        {
+            bool kept =
+                (keep != null && keep.Contains(id)) ||
+                id == CurrentItemInstanceID ||
+                id == PendingInstanceID;
+
+            if (!kept)
+                remove.Add(id);
+        }
+
+        foreach (string id in remove)
+            progress.Remove(id);
+
+        if (remove.Count > 0)
+        {
+            SaveProgress();
+            Debug.Log("ItemSessionData: pruned " + remove.Count + " old entries.");
+        }
+
+        return remove.Count;
+    }
 
     public static void ResetAllProgress()
     {
@@ -339,6 +417,7 @@ public static class ItemSessionData
 
         PendingItemData = null;
         PendingInstanceID = null;
+        PendingCustomerID = null;
         PendingItemPosition = Vector3.zero;
         PendingItemRotation = Quaternion.identity;
 

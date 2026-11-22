@@ -1,4 +1,3 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +10,7 @@ public class ShopSaveManager : MonoBehaviour
     public static ShopSaveManager Instance { get; private set; }
 
     [Header("Item Database")]
-    [Tooltip("ใส่ ItemData ทั้งหมดที่ใช้ในร้าน")]
+    [Tooltip("ใส่ ItemData ทั้งหมดที่ใช้ในร้าน (ระบบจะเติมจาก CustomerData ให้อัตโนมัติ)")]
     public List<ItemData> itemDatabase = new List<ItemData>();
 
     [Header("References")]
@@ -21,6 +20,7 @@ public class ShopSaveManager : MonoBehaviour
     public float autoSaveInterval = 3f;
 
     private const string FileName = "shop_save.json";
+    private const int CurrentVersion = 2;
 
     private float autoSaveTimer;
     private bool isRestoring;
@@ -32,7 +32,7 @@ public class ShopSaveManager : MonoBehaviour
     public bool HasSaveFile => File.Exists(SavePath);
 
     // =====================================
-    // AWAKE
+    // AWAKE / START
     // =====================================
 
     private void Awake()
@@ -46,23 +46,15 @@ public class ShopSaveManager : MonoBehaviour
         Instance = this;
 
         if (workArea == null)
-            workArea = FindObjectOfType<WorkArea>();
+            workArea = FindFirstObjectByType<WorkArea>();
 
         BuildItemDatabaseFromCustomers();
     }
-
-    // =====================================
-    // START
-    // =====================================
 
     private void Start()
     {
         LoadGame();
     }
-
-    // =====================================
-    // UPDATE / AUTO SAVE
-    // =====================================
 
     private void Update()
     {
@@ -85,7 +77,7 @@ public class ShopSaveManager : MonoBehaviour
     private void BuildItemDatabaseFromCustomers()
     {
         CustomerSpawnManager spawnManager =
-            FindObjectOfType<CustomerSpawnManager>();
+            FindFirstObjectByType<CustomerSpawnManager>();
 
         if (spawnManager == null || spawnManager.customers == null)
             return;
@@ -118,7 +110,7 @@ public class ShopSaveManager : MonoBehaviour
     }
 
     // =====================================
-    // SAVE GAME
+    // SAVE
     // =====================================
 
     public void SaveGame()
@@ -126,114 +118,79 @@ public class ShopSaveManager : MonoBehaviour
         if (isRestoring)
             return;
 
-        ShopSaveData data = new ShopSaveData();
+        ShopSaveData data = new ShopSaveData { version = CurrentVersion };
 
-        // SAVE CUSTOMER
         CustomerSpawnManager customerManager =
-            FindObjectOfType<CustomerSpawnManager>();
+            FindFirstObjectByType<CustomerSpawnManager>();
 
         if (customerManager != null)
-        {
-            data.customer =
-                customerManager.CaptureCustomerState();
+            customerManager.CaptureState(data);
 
-            if (customerManager.CurrentCustomer != null)
-            {
-                CustomerMovement movement =
-                    customerManager.CurrentCustomer
-                    .GetComponent<CustomerMovement>();
-
-                if (movement != null)
-                {
-                    data.customerMovement =
-                        movement.CaptureMovementState();
-                }
-            }
-        }
-
-        // SAVE ALL ITEMS
-        ItemPersistenceData[] allItems =
-            FindObjectsOfType<ItemPersistenceData>(true);
-
-        foreach (ItemPersistenceData persistence in allItems)
+        foreach (ItemPersistenceData persistence in ItemPersistenceData.All)
         {
             if (persistence == null ||
                 persistence.itemData == null ||
                 string.IsNullOrEmpty(persistence.instanceID))
                 continue;
 
-            Transform itemTransform = persistence.transform;
+            if (customerManager != null &&
+                customerManager.ShouldExcludeItemFromSave(persistence.instanceID))
+                continue;
 
-            Rigidbody2D rb =
-                persistence.GetComponent<Rigidbody2D>();
+            Transform t = persistence.transform;
+            Rigidbody2D rb = persistence.GetComponent<Rigidbody2D>();
 
-            ItemSaveData savedItem = new ItemSaveData();
+            ItemSaveData saved = new ItemSaveData
+            {
+                customerID = persistence.customerID,
+                itemID = persistence.itemData.itemID,
+                instanceID = persistence.instanceID,
 
-            savedItem.itemID = persistence.itemData.itemID;
-            savedItem.instanceID = persistence.instanceID;
+                posX = t.position.x,
+                posY = t.position.y,
+                posZ = t.position.z,
 
-            Vector3 position = itemTransform.position;
-            Quaternion rotation = itemTransform.rotation;
-            Vector3 scale = itemTransform.localScale;
+                rotX = t.rotation.x,
+                rotY = t.rotation.y,
+                rotZ = t.rotation.z,
+                rotW = t.rotation.w,
 
-            savedItem.posX = position.x;
-            savedItem.posY = position.y;
-            savedItem.posZ = position.z;
+                scaleX = t.localScale.x,
+                scaleY = t.localScale.y,
+                scaleZ = t.localScale.z,
 
-            savedItem.rotX = rotation.x;
-            savedItem.rotY = rotation.y;
-            savedItem.rotZ = rotation.z;
-            savedItem.rotW = rotation.w;
+                wasOnWorkArea =
+                    workArea != null &&
+                    workArea.IsCurrentItem(persistence.gameObject),
 
-            savedItem.scaleX = scale.x;
-            savedItem.scaleY = scale.y;
-            savedItem.scaleZ = scale.z;
-
-            savedItem.wasOnWorkArea =
-                workArea != null &&
-                workArea.IsCurrentItem(persistence.gameObject);
-
-            savedItem.curseFound =
-                ItemSessionData.IsCurseFoundFor(
-                    persistence.instanceID
-                );
-
-            savedItem.puzzleSolved =
-                ItemSessionData.IsPuzzleSolvedFor(
-                    persistence.instanceID
-                );
+                curseFound = ItemSessionData.IsCurseFoundFor(persistence.instanceID),
+                puzzleSolved = ItemSessionData.IsPuzzleSolvedFor(persistence.instanceID)
+            };
 
             if (rb != null)
             {
-                savedItem.velocityX = rb.linearVelocity.x;
-                savedItem.velocityY = rb.linearVelocity.y;
-                savedItem.angularVelocity = rb.angularVelocity;
-                savedItem.gravityScale = rb.gravityScale;
-                savedItem.bodyType = (int)rb.bodyType;
+                saved.velocityX = rb.linearVelocity.x;
+                saved.velocityY = rb.linearVelocity.y;
+                saved.angularVelocity = rb.angularVelocity;
+                saved.gravityScale = rb.gravityScale;
+                saved.bodyType = (int)rb.bodyType;
             }
 
-            data.items.Add(savedItem);
+            data.items.Add(saved);
         }
 
-        // WRITE JSON FILE
         try
         {
-            string json = JsonUtility.ToJson(data, true);
-
-            File.WriteAllText(SavePath, json);
-
-            Debug.Log("Shop Game Saved Successfully.");
+            File.WriteAllText(SavePath, JsonUtility.ToJson(data, true));
         }
         catch (System.Exception exception)
         {
-            Debug.LogError(
-                "Shop Save Failed: " + exception.Message
-            );
+            Debug.LogError("Shop Save Failed: " + exception.Message);
         }
     }
 
     // =====================================
-    // LOAD GAME
+    // LOAD
     // =====================================
 
     public void LoadGame()
@@ -248,10 +205,8 @@ public class ShopSaveManager : MonoBehaviour
 
         try
         {
-            string json = File.ReadAllText(SavePath);
-
             ShopSaveData data =
-                JsonUtility.FromJson<ShopSaveData>(json);
+                JsonUtility.FromJson<ShopSaveData>(File.ReadAllText(SavePath));
 
             if (data == null || data.items == null)
             {
@@ -260,11 +215,8 @@ public class ShopSaveManager : MonoBehaviour
                 return;
             }
 
-            // REMOVE EXISTING ITEMS
-            ItemPersistenceData[] existingItems =
-                FindObjectsOfType<ItemPersistenceData>(true);
-
-            foreach (ItemPersistenceData existing in existingItems)
+            foreach (ItemPersistenceData existing in
+                     new List<ItemPersistenceData>(ItemPersistenceData.All))
             {
                 if (existing != null)
                     Destroy(existing.gameObject);
@@ -274,81 +226,51 @@ public class ShopSaveManager : MonoBehaviour
         }
         catch (System.Exception exception)
         {
-            Debug.LogError(
-                "Shop Load Failed: " + exception.Message
-            );
-
+            Debug.LogError("Shop Load Failed: " + exception.Message);
             isRestoring = false;
         }
     }
 
-    // =====================================
-    // RESTORE ITEMS AND CUSTOMER
-    // =====================================
-
     private IEnumerator RestoreItems(ShopSaveData data)
     {
-        // WAIT FOR OLD ITEMS TO BE DESTROYED
+        // รอให้ของเก่าถูกทำลาย
         yield return null;
 
-        // RESTORE ITEMS
-        foreach (ItemSaveData savedItem in data.items)
+        foreach (ItemSaveData saved in data.items)
         {
-            if (savedItem == null)
+            if (saved == null)
                 continue;
 
-            ItemData itemData = FindItemData(savedItem.itemID);
+            ItemData itemData = FindItemData(saved.itemID);
 
             if (itemData == null || itemData.itemPrefab == null)
             {
-                Debug.LogWarning(
-                    "Cannot find ItemData: " + savedItem.itemID
-                );
-
+                Debug.LogWarning("Cannot find ItemData: " + saved.itemID);
                 continue;
             }
 
-            Vector3 position = new Vector3(
-                savedItem.posX,
-                savedItem.posY,
-                savedItem.posZ
-            );
-
-            Quaternion rotation = new Quaternion(
-                savedItem.rotX,
-                savedItem.rotY,
-                savedItem.rotZ,
-                savedItem.rotW
-            );
-
             GameObject itemObject = Instantiate(
                 itemData.itemPrefab,
-                position,
-                rotation
+                new Vector3(saved.posX, saved.posY, saved.posZ),
+                new Quaternion(saved.rotX, saved.rotY, saved.rotZ, saved.rotW)
             );
 
-            itemObject.transform.localScale = new Vector3(
-                savedItem.scaleX,
-                savedItem.scaleY,
-                savedItem.scaleZ
-            );
+            itemObject.transform.localScale =
+                new Vector3(saved.scaleX, saved.scaleY, saved.scaleZ);
 
             ItemPersistenceData persistence =
                 itemObject.GetComponent<ItemPersistenceData>();
 
             if (persistence == null)
-            {
-                persistence =
-                    itemObject.AddComponent<ItemPersistenceData>();
-            }
+                persistence = itemObject.AddComponent<ItemPersistenceData>();
 
-            // KEEP ORIGINAL INSTANCE ID
+            // ใช้ identity เดิมทั้งหมด
+            persistence.customerID = saved.customerID;
             persistence.itemData = itemData;
-            persistence.instanceID = savedItem.instanceID;
+            persistence.instanceID = saved.instanceID;
             persistence.restoredOnBoard = true;
 
-            DraggableItem draggable =
-                itemObject.GetComponent<DraggableItem>();
+            DraggableItem draggable = itemObject.GetComponent<DraggableItem>();
 
             if (draggable != null)
             {
@@ -358,96 +280,87 @@ public class ShopSaveManager : MonoBehaviour
                 draggable.cleanedSprite = itemData.cleanedSprite;
                 draggable.workArea = workArea;
 
-                draggable.RestoreAfterLoad(
-                    savedItem.wasOnWorkArea
-                );
+                draggable.RestoreAfterLoad(saved.wasOnWorkArea);
             }
 
-            // RESTORE SPRITE
             SpriteRenderer spriteRenderer =
                 itemObject.GetComponent<SpriteRenderer>();
 
             if (spriteRenderer != null)
             {
-                spriteRenderer.sprite = savedItem.puzzleSolved
+                spriteRenderer.sprite = saved.puzzleSolved
                     ? itemData.cleanedSprite
                     : itemData.cursedSprite;
             }
 
-            // RESTORE PHYSICS
-            Rigidbody2D rb =
-                itemObject.GetComponent<Rigidbody2D>();
+            Rigidbody2D rb = itemObject.GetComponent<Rigidbody2D>();
 
             if (rb != null)
             {
-                rb.bodyType =
-                    (RigidbodyType2D)savedItem.bodyType;
+                // เซฟตอนลาก/ตอนกำลังส่งของ body จะเป็น Kinematic gravity 0
+                // ตอนโหลดไม่มีใครลากอยู่ ให้กลับเป็น Dynamic ปกติ กันของลอยค้าง
+                bool wasKinematic =
+                    saved.bodyType == (int)RigidbodyType2D.Kinematic;
 
-                rb.gravityScale = savedItem.gravityScale;
+                rb.bodyType = wasKinematic
+                    ? RigidbodyType2D.Dynamic
+                    : (RigidbodyType2D)saved.bodyType;
 
-                rb.linearVelocity = new Vector2(
-                    savedItem.velocityX,
-                    savedItem.velocityY
-                );
+                rb.gravityScale = wasKinematic && draggable != null
+                    ? draggable.OriginalGravityScale
+                    : saved.gravityScale;
 
-                rb.angularVelocity =
-                    savedItem.angularVelocity;
+                rb.linearVelocity = wasKinematic
+                    ? Vector2.zero
+                    : new Vector2(saved.velocityX, saved.velocityY);
+
+                rb.angularVelocity = wasKinematic ? 0f : saved.angularVelocity;
             }
 
-            // RESTORE WORK AREA
-            if (savedItem.wasOnWorkArea && workArea != null)
+            if (saved.wasOnWorkArea && workArea != null)
             {
                 if (!workArea.TryPlaceItem(itemObject))
                 {
                     Debug.LogWarning(
-                        "Could not restore Item to WorkArea: " +
-                        itemData.itemName
+                        "Could not restore Item to WorkArea: " + itemData.itemName
                     );
                 }
             }
 
-            // RESTORE PER-ITEM PROGRESS
-            if (savedItem.curseFound)
-            {
-                ItemSessionData.MarkCurseFound(
-                    savedItem.instanceID
-                );
-            }
+            if (saved.curseFound)
+                ItemSessionData.MarkCurseFound(saved.instanceID);
 
-            if (savedItem.puzzleSolved)
-            {
-                ItemSessionData.MarkPuzzleSolved(
-                    savedItem.instanceID
-                );
-            }
+            if (saved.puzzleSolved)
+                ItemSessionData.MarkPuzzleSolved(saved.instanceID);
         }
 
-        // RESTORE CUSTOMER
+        // ออเดอร์ที่รอรับคืน + ลูกค้าที่อยู่ในร้าน
         CustomerSpawnManager customerManager =
-            FindObjectOfType<CustomerSpawnManager>();
+            FindFirstObjectByType<CustomerSpawnManager>();
 
-        if (customerManager != null && data.customer != null)
+        if (customerManager != null)
+            customerManager.RestoreState(data);
+
+        // ล้างความคืบหน้าของสินค้าที่ไม่มีอยู่ในเซฟแล้ว (ถูกลูกค้ารับไปแล้ว)
+        HashSet<string> keep = new HashSet<string>();
+
+        foreach (ItemSaveData saved in data.items)
         {
-            customerManager.RestoreSavedCustomer(
-                data.customer,
-                data.customerMovement
-            );
+            if (saved != null && !string.IsNullOrEmpty(saved.instanceID))
+                keep.Add(saved.instanceID);
         }
 
-        // CLEAR OLD PENDING ITEM
+        ItemSessionData.PruneExcept(keep);
+
         ItemSessionData.ClearPendingWorkAreaItem();
 
-        // FINISH RESTORE
         isRestoring = false;
 
-        Debug.Log(
-            "Shop Restore Completed. Items: " +
-            data.items.Count
-        );
+        Debug.Log("Shop Restore Completed. Items: " + data.items.Count);
     }
 
     // =====================================
-    // RESET SAVE
+    // RESET
     // =====================================
 
     public void ResetGameSave()
@@ -458,35 +371,23 @@ public class ShopSaveManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("Starting Game Reset...");
-
         try
         {
-            // 1. ลบไฟล์ Save หลัก
             if (File.Exists(SavePath))
-            {
                 File.Delete(SavePath);
-            }
 
-            // 2. ล้างข้อมูลความคืบหน้า Item ทั้งหมด
             ItemSessionData.ResetAllProgress();
 
-            // 3. รีเซ็ต Timer Auto Save
+            if (ShopMoneyManager.Instance != null)
+                ShopMoneyManager.Instance.ResetMoney();
+
             autoSaveTimer = 0f;
 
-            // 4. โหลด Scene ปัจจุบันใหม่
-            int currentScene =
-                SceneManager.GetActiveScene().buildIndex;
-
-            Debug.Log("Game Reset Completed. Reloading Scene...");
-
-            SceneManager.LoadScene(currentScene);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
         catch (System.Exception exception)
         {
-            Debug.LogError(
-                "Reset Game Failed: " + exception.Message
-            );
+            Debug.LogError("Reset Game Failed: " + exception.Message);
         }
     }
 
@@ -508,8 +409,6 @@ public class ShopSaveManager : MonoBehaviour
     private void OnDestroy()
     {
         if (Instance == this)
-        {
             Instance = null;
-        }
     }
 }

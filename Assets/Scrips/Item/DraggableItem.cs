@@ -54,6 +54,12 @@ public class DraggableItem : MonoBehaviour
     public float shakeStrength = 0.04f;
     public float shakeDuration = 0.12f;
 
+    [Header("Cursed Aura")]
+    [Tooltip("ของที่ยังไม่ผ่าน Puzzle จะเรืองแสงวูบวาบ")]
+    public Color cursedAuraColor = new Color(0.75f, 0.45f, 1f, 1f);
+    [Range(0f, 1f)] public float cursedAuraAmount = 0.35f;
+    public float cursedAuraSpeed = 2.2f;
+
     [Header("Audio")]
     public AudioClip pickupSfx;
     public AudioClip dropSfx;
@@ -94,6 +100,20 @@ public class DraggableItem : MonoBehaviour
     private bool hasLanded;
     public bool HasLanded => hasLanded;
 
+    public bool IsDragging => isDragging;
+    public bool IsLocked => isLocked;
+    public float OriginalGravityScale => originalGravityScale;
+
+    /// <summary>สินค้าที่ผู้เล่นกำลังลากอยู่ (ใช้ไฮไลต์จุดคืนของ)</summary>
+    public static DraggableItem DraggedItem { get; private set; }
+
+    private bool isLocked;
+    private float externalScale = 1f;
+
+    private ItemPersistenceData persistence;
+    private bool auraTinted;
+    private float auraPhase;
+
     private float currentAngle;
     private float velocityX;
 
@@ -110,6 +130,7 @@ public class DraggableItem : MonoBehaviour
     void Awake()
     {
         mainCamera = Camera.main;
+        auraPhase = Random.value * Mathf.PI * 2f;
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         itemCollider = GetComponent<Collider2D>();
@@ -143,6 +164,12 @@ public class DraggableItem : MonoBehaviour
 
     void OnDestroy()
     {
+        if (DraggedItem == this)
+            DraggedItem = null;
+
+        if (isDragging || isHovering)
+            SetCursor(null);
+
         if (workArea != null)
             workArea.ReleaseItem(gameObject);
 
@@ -198,6 +225,11 @@ public class DraggableItem : MonoBehaviour
                     Debug.Log(
                         "Item registered: " + itemName
                     );
+                }
+                else
+                {
+                    // โต๊ะ Puzzle มีสินค้าอยู่แล้ว -> ดันชิ้นนี้ออกไปรอข้างโต๊ะ
+                    NudgeOutOfWorkArea();
                 }
             }
         }
@@ -422,9 +454,11 @@ public class DraggableItem : MonoBehaviour
         if (spriteRenderer == null)
             return;
 
+        UpdateAura();
+
         transform.localScale = new Vector3(
-            originalScale.x * scaleMul * (1f + squashValue),
-            originalScale.y * scaleMul * (1f - squashValue),
+            originalScale.x * scaleMul * externalScale * (1f + squashValue),
+            originalScale.y * scaleMul * externalScale * (1f - squashValue),
             originalScale.z
         );
 
@@ -458,7 +492,7 @@ public class DraggableItem : MonoBehaviour
     {
         isHovering = true;
 
-        if (!isDragging)
+        if (!isDragging && !isLocked)
             SetCursor(openHandCursor);
     }
 
@@ -476,6 +510,13 @@ public class DraggableItem : MonoBehaviour
 
     void OnMouseDown()
     {
+        // ล็อกอยู่ (เจ้าของกำลังมารับ) -> หยิบไม่ได้ แต่ตอบสนองนิดหน่อย
+        if (isLocked)
+        {
+            Wobble(1f);
+            return;
+        }
+
         if (workArea == null)
         {
             Debug.LogError(
@@ -508,6 +549,7 @@ public class DraggableItem : MonoBehaviour
 
         isDragging = true;
         isReturning = false;
+        DraggedItem = this;
 
         isSquashing = false;
         squashValue = 0f;
@@ -562,6 +604,15 @@ public class DraggableItem : MonoBehaviour
             targetPosition.x,
             targetPosition.y
         );
+
+        // ลากได้ไม่เกินขอบกล้อง
+        if (CameraBounds2D.Instance != null && itemCollider != null)
+        {
+            dragTarget = CameraBounds2D.Instance.ClampToView(
+                dragTarget,
+                itemCollider.bounds.extents
+            );
+        }
     }
 
     // =================================
@@ -574,6 +625,9 @@ public class DraggableItem : MonoBehaviour
             return;
 
         isDragging = false;
+
+        if (DraggedItem == this)
+            DraggedItem = null;
 
         spriteRenderer.sortingOrder =
             originalSortingOrder;
@@ -683,10 +737,28 @@ public class DraggableItem : MonoBehaviour
 
     void ReturnToOriginalPosition()
     {
+        BeginReturnMotion(originalPosition);
+    }
+
+    void NudgeOutOfWorkArea()
+    {
+        if (rb == null || workArea == null || itemCollider == null)
+            return;
+
+        Vector3 outside =
+            workArea.GetNearestOutsidePoint(itemCollider.bounds);
+
+        Vector2 delta = (Vector2)(outside - itemCollider.bounds.center);
+
+        BeginReturnMotion(rb.position + delta);
+    }
+
+    void BeginReturnMotion(Vector2 target)
+    {
         isReturning = true;
         returnToBoard = false;
 
-        returnTarget = originalPosition;
+        returnTarget = target;
 
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
@@ -695,6 +767,139 @@ public class DraggableItem : MonoBehaviour
         rb.bodyType = RigidbodyType2D.Kinematic;
 
         PlaySfx(dropSfx);
+    }
+
+    // =================================
+    // CURSED AURA / CELEBRATE
+    // =================================
+
+    void UpdateAura()
+    {
+        if (persistence == null)
+        {
+            persistence = GetComponent<ItemPersistenceData>();
+
+            if (persistence == null)
+                return;
+        }
+
+        if (string.IsNullOrEmpty(persistence.instanceID))
+            return;
+
+        // เพิ่งทำ Puzzle เสร็จ -> ฉลอง
+        if (ItemSessionData.ConsumeJustSolved(persistence.instanceID))
+            StartCoroutine(CelebrateRoutine());
+
+        bool solved = ItemSessionData.IsPuzzleSolvedFor(persistence.instanceID);
+
+        if (solved)
+        {
+            if (auraTinted)
+            {
+                spriteRenderer.color = Color.white;
+                auraTinted = false;
+            }
+
+            return;
+        }
+
+        float pulse = (Mathf.Sin(Time.time * cursedAuraSpeed + auraPhase) + 1f) * 0.5f;
+
+        spriteRenderer.color = Color.Lerp(
+            Color.white,
+            cursedAuraColor,
+            pulse * cursedAuraAmount
+        );
+
+        auraTinted = true;
+    }
+
+    IEnumerator CelebrateRoutine()
+    {
+        yield return new WaitForSeconds(0.35f);
+
+        Wobble(1f);
+
+        FloatingText.Spawn(
+            "สะอาดแล้ว!",
+            transform.position + Vector3.up * 0.9f,
+            new Color(0.6f, 1f, 0.8f),
+            5f
+        );
+    }
+
+    // =================================
+    // LOCK / FEEDBACK / COLLECT
+    // =================================
+
+    public void SetLocked(bool locked)
+    {
+        isLocked = locked;
+
+        if (locked && isDragging)
+        {
+            isDragging = false;
+
+            if (DraggedItem == this)
+                DraggedItem = null;
+        }
+    }
+
+    /// <summary>เด้งยุบนิดหน่อยเป็น feedback (เช่นตอนหยิบไม่ได้)</summary>
+    public void Wobble(float strength)
+    {
+        currentSquashAmount = squashAmount * Mathf.Clamp01(strength);
+        squashTimer = 0f;
+        isSquashing = true;
+    }
+
+    /// <summary>สินค้าลอยเข้าหาเป้าหมายพร้อมหดเล็กลง (ใช้ตอนลูกค้ารับของ)</summary>
+    public IEnumerator PlayCollectAnimation(Transform target, float duration)
+    {
+        isLocked = true;
+        isDragging = false;
+        isReturning = false;
+
+        if (DraggedItem == this)
+            DraggedItem = null;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.gravityScale = 0f;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+        }
+
+        foreach (Collider2D c in GetComponentsInChildren<Collider2D>())
+            c.enabled = false;
+
+        if (workArea != null)
+            workArea.ReleaseItem(gameObject);
+
+        Vector3 start = transform.position;
+        float t = 0f;
+        duration = Mathf.Max(duration, 0.05f);
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+
+            float n = Mathf.Clamp01(t);
+            float eased = n * n;
+
+            Vector3 end = target != null
+                ? target.position + Vector3.up * 0.4f
+                : start;
+
+            Vector3 pos = Vector3.Lerp(start, end, eased);
+            pos.y += Mathf.Sin(n * Mathf.PI) * 0.4f;
+
+            transform.position = pos;
+            externalScale = Mathf.Lerp(1f, 0.15f, eased);
+
+            yield return null;
+        }
     }
 
     public void RestoreAfterLoad(bool landed)

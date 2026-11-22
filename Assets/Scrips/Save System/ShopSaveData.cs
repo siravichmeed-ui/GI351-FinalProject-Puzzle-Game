@@ -1,25 +1,57 @@
-
 using System;
 using System.Collections.Generic;
 
 [Serializable]
 public class ShopSaveData
 {
-    public int version = 1;
+    public int version = 2;
+
     public List<ItemSaveData> items = new List<ItemSaveData>();
-    public CustomerMovementSaveData customerMovement;
+
+    // ลูกค้าที่กำลังมาฝากของ (คนใหม่)
     public CustomerSaveData customer;
+    public CustomerMovementSaveData customerMovement;
+
+    // ออเดอร์ทั้งหมดที่ฝากของไว้และยังรอรับคืน
+    public List<OrderSaveData> orders = new List<OrderSaveData>();
+
+    // เจ้าของสินค้าที่กำลังเดินมารับของ
+    public string returningOrderInstanceID;
+    public CustomerMovementSaveData returnCustomerMovement;
 }
-[System.Serializable]
+
+[Serializable]
+public class OrderSaveData
+{
+    public string instanceID;
+    public string customerID;
+    public string itemID;
+
+    public bool rewardPaid;
+    public bool itemPickedUp;
+}
+
+[Serializable]
 public class CustomerSaveData
 {
     public string customerID;
     public string itemID;
+
     public bool orderAccepted;
     public bool hasDelivered;
     public string deliveredItemInstanceID;
+
+    // ---- Legacy (version 1) : ใช้สำหรับ migrate เท่านั้น ----
+    public bool hasPendingReturn;
+    public bool isReturning;
+    public string pendingCustomerID;
+    public string pendingItemID;
+    public string pendingItemInstanceID;
+    public bool returnRewardPaid;
+    public bool returnItemPickedUp;
 }
-[System.Serializable]
+
+[Serializable]
 public class CustomerMovementSaveData
 {
     public float posX;
@@ -42,6 +74,7 @@ public class CustomerMovementSaveData
     public bool isMoving;
     public bool hasArrived;
     public bool isLeaving;
+    public bool isReturning;
 
     public float walkTimer;
     public float currentSpeed;
@@ -53,10 +86,10 @@ public class CustomerMovementSaveData
     public float talkSquash;
 }
 
-
 [Serializable]
 public class ItemSaveData
 {
+    public string customerID;
     public string itemID;
     public string instanceID;
 
@@ -83,5 +116,3 @@ public class ItemSaveData
     public float gravityScale;
     public int bodyType;
 }
-
-

@@ -177,7 +177,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -2301419484024558168, guid: 700165c6225b7d541abc6213d12b6137, type: 3}
+  m_Sprite: {fileID: -2301419484024558168, guid: 83cfb12e51b536643b9ec94a0b683ad9, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -418,7 +418,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -4896723548625473064, guid: bad25db07eca83a4d9affa75c53e39dc, type: 3}
+  m_Sprite: {fileID: -4896723548625473064, guid: 351335e82cbf9b64cbc6b357bf75d3af, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -465,7 +465,7 @@ RectTransform:
   m_GameObject: {fileID: 262063055}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1613492, y: 1, z: 1}
+  m_LocalScale: {x: 1.4556351, y: 1.2534, z: 1.2534}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1115086894}
@@ -551,7 +551,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 2691104959147948870, guid: a918b1ac555c4c24fbd60474174ccb89, type: 3}
+  m_Sprite: {fileID: 2691104959147948870, guid: 2859a4dedc95eba4f8744e6705350030, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -847,7 +847,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 5276349827549298667, guid: 635373f6a049da6489eb6414c297e2bb, type: 3}
+  m_Sprite: {fileID: 5276349827549298667, guid: d1b8085ce586af6459c2e9ba0b52464b, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -967,7 +967,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 3143563035851544001, guid: 55c3f03daf988be4fa9f4e9e153d832d, type: 3}
+  m_Sprite: {fileID: 3143563035851544001, guid: ec63f66522fe1ce41a47ae93251a4c79, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

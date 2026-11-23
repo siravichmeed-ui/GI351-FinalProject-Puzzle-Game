@@ -111,7 +111,7 @@ MonoBehaviour:
   sourceSprite: {fileID: 0}
   sourceSpriteSize: {x: 70, y: 70}
   sourceSpriteAngleOffset: 0
-  targetSprite: {fileID: 0}
+  targetSprite: {fileID: -8498787567200268968, guid: 478d590f0e644cf4da6d42da9a8bc867, type: 3}
   targetSpriteSize: {x: 70, y: 70}
   mirrorSprite: {fileID: 0}
   mirrorSpriteSize: {x: 90, y: 90}

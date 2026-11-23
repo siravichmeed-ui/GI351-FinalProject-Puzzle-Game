@@ -211,7 +211,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &856197132
+--- !u!1 &1199886466
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -219,195 +219,55 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 856197133}
-  - component: {fileID: 856197135}
-  - component: {fileID: 856197134}
+  - component: {fileID: 1199886467}
+  - component: {fileID: 1199886468}
   m_Layer: 5
-  m_Name: Panel
+  m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &856197133
+--- !u!224 &1199886467
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 856197132}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 861754807}
-  m_Father: {fileID: 1702327116}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &856197134
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 856197132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &856197135
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 856197132}
-  m_CullTransparentMesh: 1
---- !u!1 &861754806
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 861754807}
-  - component: {fileID: 861754809}
-  - component: {fileID: 861754808}
-  - component: {fileID: 861754810}
-  m_Layer: 5
-  m_Name: board
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &861754807
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 861754806}
+  m_GameObject: {fileID: 1199886466}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 856197133}
+  m_Father: {fileID: 1702327116}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1400, y: 800}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &861754808
+--- !u!114 &1199886468
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 861754806}
+  m_GameObject: {fileID: 1199886466}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Script: {fileID: 11500000, guid: 48fabf91c4bdd2d499a4d19c80208b81, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &861754809
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 861754806}
-  m_CullTransparentMesh: 1
---- !u!114 &861754810
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 861754806}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5717cf3e40ae124c91ccc605310c194, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShatteredMirrorPuzzle
-  windowRoot: {fileID: 856197132}
-  images:
-  - {fileID: -6665582588061223574, guid: 349f9d8869569c34c808b6fdeb1ad1ad, type: 3}
-  textures:
-  - {fileID: 2800000, guid: 349f9d8869569c34c808b6fdeb1ad1ad, type: 3}
-  cols: 4
-  rows: 3
-  splitChance: 0.35
-  jitter: 0.24
-  snapDistance: 60
-  showGuides: 1
-  guideAlpha: 0.25
-  padding: 24
-  trayHeightRatio: 0.32
-  panelColor: {r: 0.05, g: 0.07, b: 0.12, a: 0.85}
-  trayColor: {r: 0.1, g: 0.12, b: 0.2, a: 0.9}
-  frameColor: {r: 0.75, g: 0.9, b: 1, a: 0.8}
-  outlineColor: {r: 1, g: 1, b: 1, a: 0.5}
-  liftOutlineColor: {r: 1, g: 1, b: 1, a: 0.95}
-  snapFlashColor: {r: 0.75, g: 1, b: 1, a: 1}
-  outlineThickness: 2
-  facetStrength: 0.08
-  liftScale: 1.06
-  barBgColor: {r: 1, g: 1, b: 1, a: 0.12}
-  barColor: {r: 0.65, g: 0.9, b: 1, a: 1}
-  seamFadeDuration: 0.7
-  winHoldTime: 1.3
-  audioSource: {fileID: 0}
-  pickClip: {fileID: 0}
-  dropClip: {fileID: 0}
-  snapClip: {fileID: 0}
-  winClip: {fileID: 0}
-  openOnStart: 1
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleManager
+  windows:
+  - {fileID: 2436135224171756773, guid: 2291ce1de27c0b44fad1d369caeca497, type: 3}
+  - {fileID: 1287960116093082396, guid: 4c20eb3c8a3b43d44a0c9275b1662524, type: 3}
+  - {fileID: 1559101126372835673, guid: 1b33f0f2a1146a542bd3be561ceffde6, type: 3}
+  - {fileID: 633376331663512155, guid: baae3497f9b5a5f41801af3a61175d0f, type: 3}
+  selectedIndex: 0
+  runOnStart: 0
+  showButtons: 1
+  canvas: {fileID: 1702327116}
 --- !u!1 &1232839358
 GameObject:
   m_ObjectHideFlags: 0
@@ -582,7 +442,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 856197133}
+  - {fileID: 1199886467}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

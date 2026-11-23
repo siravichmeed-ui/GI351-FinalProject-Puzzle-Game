@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: bad25db07eca83a4d9affa75c53e39dc
+guid: 201c7e1099367514496da0cade76b394
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4896723548625473064
-    second: SettintgsEx._0
+      213: 2218846718096236825
+    second: bgpz1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -99,19 +99,6 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
     buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -128,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SettintgsEx._0
+      name: bgpz1_0
       rect:
         serializedVersion: 2
-        x: 221
-        y: 23
-        width: 1735
-        height: 642
+        x: 487
+        y: 26
+        width: 913
+        height: 935
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -143,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8d173e060e75b0cb0800000000000000
-      internalID: -4896723548625473064
+      spriteID: 911ea2b855deace10800000000000000
+      internalID: 2218846718096236825
       vertices: []
       indices: 
       edges: []
@@ -163,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      SettintgsEx._0: -4896723548625473064
+      bgpz1_0: 2218846718096236825
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

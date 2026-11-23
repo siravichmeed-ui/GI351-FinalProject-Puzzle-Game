@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 635373f6a049da6489eb6414c297e2bb
+guid: 478d590f0e644cf4da6d42da9a8bc867
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5276349827549298667
-    second: MenuEx._0
+      213: -8498787567200268968
+    second: Rune2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -99,19 +99,6 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
     buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -128,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: MenuEx._0
+      name: Rune2_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1672
-        height: 941
+        x: 2504
+        y: 167
+        width: 2584
+        height: 3811
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -143,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: beff4cd763c593940800000000000000
-      internalID: 5276349827549298667
+      spriteID: 85d85837cbd3e0a80800000000000000
+      internalID: -8498787567200268968
       vertices: []
       indices: 
       edges: []
@@ -163,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      MenuEx._0: 5276349827549298667
+      Rune2_0: -8498787567200268968
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

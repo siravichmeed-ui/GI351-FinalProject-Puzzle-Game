@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: 349f9d8869569c34c808b6fdeb1ad1ad
+guid: 3aa4fa8d8a83eb94cbee9d48da6d3f1b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6665582588061223574
-    second: test puzzle5_0
+      213: 556073122444181120
+    second: pz1_0
+  - first:
+      213: 5840696103675078948
+    second: pz1_1
+  - first:
+      213: -2233496506191405532
+    second: pz1_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +43,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +52,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -115,13 +121,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: test puzzle5_0
+      name: pz1_0
       rect:
         serializedVersion: 2
-        x: 520
-        y: 119
-        width: 913
-        height: 935
+        x: 672
+        y: 311
+        width: 611
+        height: 678
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,8 +136,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a65f491b3f71f73a0800000000000000
-      internalID: -6665582588061223574
+      spriteID: 08e7d640f8197b700800000000000000
+      internalID: 556073122444181120
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pz1_1
+      rect:
+        serializedVersion: 2
+        x: 723
+        y: 214
+        width: 193
+        height: 148
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 429af8439225e0150800000000000000
+      internalID: 5840696103675078948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pz1_2
+      rect:
+        serializedVersion: 2
+        x: 1064
+        y: 226
+        width: 176
+        height: 133
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42e926dd2c60101e0800000000000000
+      internalID: -2233496506191405532
       vertices: []
       indices: 
       edges: []
@@ -140,7 +190,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -150,7 +200,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      test puzzle5_0: -6665582588061223574
+      pz1_0: 556073122444181120
+      pz1_1: 5840696103675078948
+      pz1_2: -2233496506191405532
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

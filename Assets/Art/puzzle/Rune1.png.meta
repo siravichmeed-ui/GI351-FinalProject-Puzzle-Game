@@ -1,37 +1,10 @@
 fileFormatVersion: 2
-guid: a918b1ac555c4c24fbd60474174ccb89
+guid: ba8ce8d18c1e78f4ba8186fe4387c891
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2691104959147948870
-    second: playEx._0
-  - first:
-      213: 2828956325587863524
-    second: playEx._1
-  - first:
-      213: -8771411768822344250
-    second: playEx._2
-  - first:
-      213: 918123091264283403
-    second: playEx._3
-  - first:
-      213: -6277627331242738008
-    second: playEx._4
-  - first:
-      213: 6989333755033326765
-    second: playEx._5
-  - first:
-      213: 812164818583537623
-    second: playEx._6
-  - first:
-      213: -3121350268087898175
-    second: playEx._7
-  - first:
-      213: -8088206445145842712
-    second: playEx._8
-  - first:
-      213: 1194690812593777432
-    second: playEx._9
+      213: -7714041338956659686
+    second: Rune1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,19 +99,6 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
     buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -155,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: playEx._0
+      name: Rune1_0
       rect:
         serializedVersion: 2
-        x: 214
-        y: 79
-        width: 1780
-        height: 556
+        x: 2520
+        y: 203
+        width: 2571
+        height: 3788
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -170,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 64b3e47c3b9b85520800000000000000
-      internalID: 2691104959147948870
+      spriteID: a144fc0e54832f490800000000000000
+      internalID: -7714041338956659686
       vertices: []
       indices: 
       edges: []
@@ -180,7 +140,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 3f5699390dacc8743bf4d2aeacc7204a
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -190,16 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      playEx._0: 2691104959147948870
-      playEx._1: 2828956325587863524
-      playEx._2: -8771411768822344250
-      playEx._3: 918123091264283403
-      playEx._4: -6277627331242738008
-      playEx._5: 6989333755033326765
-      playEx._6: 812164818583537623
-      playEx._7: -3121350268087898175
-      playEx._8: -8088206445145842712
-      playEx._9: 1194690812593777432
+      Rune1_0: -7714041338956659686
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

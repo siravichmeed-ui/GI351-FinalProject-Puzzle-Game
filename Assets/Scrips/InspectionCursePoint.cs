@@ -1,4 +1,4 @@
-
+/*
 using UnityEngine;
 
 public class InspectionCursePoint : MonoBehaviour
@@ -16,3 +16,4 @@ public class InspectionCursePoint : MonoBehaviour
         inspectionManager.EnterPuzzle();
     }
 }
+*/

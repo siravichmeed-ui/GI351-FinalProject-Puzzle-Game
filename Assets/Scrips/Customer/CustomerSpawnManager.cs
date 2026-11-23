@@ -99,6 +99,33 @@ public class CustomerSpawnManager : MonoBehaviour
     public bool IsReturnInProgress => returnCustomer != null || queuedReturn != null;
     public int PendingOrderCount => orders.Count;
 
+    /// <summary>ยังมีลูกค้า (ใหม่/มารับของ) อยู่ในร้านหรือรอคิวอยู่</summary>
+    public bool HasActiveCustomers =>
+        currentCustomer != null || returnCustomer != null || queuedReturn != null;
+
+    private void HandleDayStarted()
+    {
+        spawnQuickly = true;
+    }
+
+    private void OnDestroy()
+    {
+        if (ShopDayManager.Instance != null)
+            ShopDayManager.Instance.OnDayStarted -= HandleDayStarted;
+    }
+
+    /// <summary>ปิดร้าน: ลูกค้าที่ยังไม่ได้ฝากของให้เดินออกไป (คนที่ฝากแล้วจะออกเองตามปกติ)</summary>
+    public void DismissWaitingCustomer()
+    {
+        if (currentCustomer == null)
+            return;
+
+        CustomerInteraction interaction = currentCustomer.GetComponent<CustomerInteraction>();
+
+        if (interaction != null)
+            interaction.DismissForClosing();
+    }
+
     // =====================================
     // START
     // =====================================
@@ -121,6 +148,17 @@ public class CustomerSpawnManager : MonoBehaviour
 
         isInitializing = false;
 
+        ShopDayManager day = ShopDayManager.Instance;
+
+        if (day != null)
+        {
+            day.OnDayStarted += HandleDayStarted;
+
+            // วันเพิ่งเริ่ม -> ลูกค้าคนแรกเข้าเร็วๆ ไม่ต้องรอสุ่ม 20-60 วินาที
+            if (day.ElapsedMinutes < 1f)
+                spawnQuickly = true;
+        }
+
         StartCoroutine(SpawnCustomerRoutine());
     }
 
@@ -131,6 +169,7 @@ public class CustomerSpawnManager : MonoBehaviour
     private bool CanSpawnCustomer()
     {
         return !isInitializing &&
+               (ShopDayManager.Instance == null || ShopDayManager.Instance.IsShopOpen) &&
                currentCustomer == null &&
                (maxWaitingOrders <= 0 || orders.Count < maxWaitingOrders);
     }

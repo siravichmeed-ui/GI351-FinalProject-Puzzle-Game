@@ -8,7 +8,7 @@ public class ShopMoneyManager : MonoBehaviour
     public static ShopMoneyManager Instance { get; private set; }
 
     [Header("Money Settings")]
-    [SerializeField] private int startingMoney = 0;
+    [SerializeField] private int startingMoney = 500;
 
     [Header("UI")]
     [SerializeField] private TMP_Text moneyText;
@@ -22,6 +22,9 @@ public class ShopMoneyManager : MonoBehaviour
     private const string MoneySaveKey = "CursedShop_Money";
 
     public int CurrentMoney { get; private set; }
+
+    /// <summary>มีช่องแสดงเงินของตัวเองหรือไม่ (ShopHUD จะได้ไม่เขียนทับ)</summary>
+    public bool HasMoneyText => moneyText != null;
 
     /// <summary>(เงินเดิม, เงินใหม่)</summary>
     public event Action<int, int> OnMoneyChanged;

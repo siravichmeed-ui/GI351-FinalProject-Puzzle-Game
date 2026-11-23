@@ -24,6 +24,7 @@ public class ShopSaveManager : MonoBehaviour
 
     private float autoSaveTimer;
     private bool isRestoring;
+    private bool saveBlocked;
 
     private string SavePath =>
         Path.Combine(Application.persistentDataPath, FileName);
@@ -115,7 +116,7 @@ public class ShopSaveManager : MonoBehaviour
 
     public void SaveGame()
     {
-        if (isRestoring)
+        if (isRestoring || saveBlocked)
             return;
 
         ShopSaveData data = new ShopSaveData { version = CurrentVersion };
@@ -125,6 +126,9 @@ public class ShopSaveManager : MonoBehaviour
 
         if (customerManager != null)
             customerManager.CaptureState(data);
+
+        if (ShopDayManager.Instance != null)
+            ShopDayManager.Instance.CaptureState(data);
 
         foreach (ItemPersistenceData persistence in ItemPersistenceData.All)
         {
@@ -283,12 +287,17 @@ public class ShopSaveManager : MonoBehaviour
                 draggable.RestoreAfterLoad(saved.wasOnWorkArea);
             }
 
+            // ผล Puzzle อาจถูกบันทึกใน ItemSessionData หลังเซฟไฟล์ (ทำเสร็จในซีนล้างคำสาป)
+            bool solvedNow =
+                saved.puzzleSolved ||
+                ItemSessionData.IsPuzzleSolvedFor(saved.instanceID);
+
             SpriteRenderer spriteRenderer =
                 itemObject.GetComponent<SpriteRenderer>();
 
             if (spriteRenderer != null)
             {
-                spriteRenderer.sprite = saved.puzzleSolved
+                spriteRenderer.sprite = solvedNow
                     ? itemData.cleanedSprite
                     : itemData.cursedSprite;
             }
@@ -341,6 +350,9 @@ public class ShopSaveManager : MonoBehaviour
         if (customerManager != null)
             customerManager.RestoreState(data);
 
+        if (ShopDayManager.Instance != null)
+            ShopDayManager.Instance.RestoreState(data.day);
+
         // ล้างความคืบหน้าของสินค้าที่ไม่มีอยู่ในเซฟแล้ว (ถูกลูกค้ารับไปแล้ว)
         HashSet<string> keep = new HashSet<string>();
 
@@ -360,8 +372,35 @@ public class ShopSaveManager : MonoBehaviour
     }
 
     // =====================================
-    // RESET
+    // RESET / CLEAR
     // =====================================
+
+    /// <summary>
+    /// ลบเซฟทั้งหมด (ไฟล์ร้าน + เงิน + ความคืบหน้าสินค้า) และหยุดเซฟทับ
+    /// ใช้ตอน Game Over / เริ่มเกมใหม่
+    /// </summary>
+    public void ClearSave()
+    {
+        // กัน autosave / OnApplicationQuit เขียนไฟล์กลับมาทับ
+        saveBlocked = true;
+
+        try
+        {
+            if (File.Exists(SavePath))
+                File.Delete(SavePath);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogError("Clear Save Failed: " + exception.Message);
+        }
+
+        ItemSessionData.ResetAllProgress();
+
+        if (ShopMoneyManager.Instance != null)
+            ShopMoneyManager.Instance.ResetMoney();
+
+        autoSaveTimer = 0f;
+    }
 
     public void ResetGameSave()
     {
@@ -371,24 +410,11 @@ public class ShopSaveManager : MonoBehaviour
             return;
         }
 
-        try
-        {
-            if (File.Exists(SavePath))
-                File.Delete(SavePath);
+        ClearSave();
 
-            ItemSessionData.ResetAllProgress();
+        Time.timeScale = 1f;
 
-            if (ShopMoneyManager.Instance != null)
-                ShopMoneyManager.Instance.ResetMoney();
-
-            autoSaveTimer = 0f;
-
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
-        catch (System.Exception exception)
-        {
-            Debug.LogError("Reset Game Failed: " + exception.Message);
-        }
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     // =====================================

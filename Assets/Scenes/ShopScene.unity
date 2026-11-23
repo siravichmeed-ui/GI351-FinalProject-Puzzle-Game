@@ -191,7 +191,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &52304950
 RectTransform:
   m_ObjectHideFlags: 0
@@ -498,7 +498,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &124589860
 RectTransform:
   m_ObjectHideFlags: 0
@@ -635,7 +635,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &242586887
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1215,7 +1215,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &719925352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2562,7 +2562,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1845290664
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2790,7 +2790,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1900767340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2798,15 +2798,16 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1900767339}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a15f875ada337b74090866d9065f4c0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShopDayManager
   currentDay: 1
   openHour: 8
-  closeHour: 18
-  money: 500
+  closeHour: 9
+  secondsPerGameMinute: 1
+  closingGraceSeconds: 30
   dailyRent: 1000
   unpaidRent: 0
   debtDays: 0
@@ -2976,7 +2977,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2010106844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2984,7 +2985,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2010106843}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 121b6f4b2551c7240b3ddfb636fd8c4d, type: 3}
   m_Name: 
@@ -2994,6 +2995,9 @@ MonoBehaviour:
   moneyText: {fileID: 124589862}
   rentText: {fileID: 52304952}
   statusText: {fileID: 719925352}
+  earningsText: {fileID: 0}
+  debtText: {fileID: 0}
+  dayProgressFill: {fileID: 0}
 --- !u!4 &2010106845
 Transform:
   m_ObjectHideFlags: 0

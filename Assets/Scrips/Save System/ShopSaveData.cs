@@ -18,6 +18,19 @@ public class ShopSaveData
     // เจ้าของสินค้าที่กำลังเดินมารับของ
     public string returningOrderInstanceID;
     public CustomerMovementSaveData returnCustomerMovement;
+
+    // ระบบวัน-เวลา-ค่าเช่า
+    public DaySaveData day = new DaySaveData();
+}
+
+[Serializable]
+public class DaySaveData
+{
+    public int currentDay;
+    public float elapsedGameMinutes;
+    public int unpaidRent;
+    public int debtDays;
+    public int todayEarnings;
 }
 
 [Serializable]

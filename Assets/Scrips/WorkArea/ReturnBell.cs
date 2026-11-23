@@ -65,7 +65,7 @@ public class ReturnBell : MonoBehaviour
 
     public void RingBell()
     {
-        if (Time.unscaledTime < nextRingTime)
+        if (Time.unscaledTime < nextRingTime || Time.timeScale <= 0f)
             return;
 
         nextRingTime = Time.unscaledTime + cooldown;
@@ -101,17 +101,17 @@ public class ReturnBell : MonoBehaviour
         switch (result)
         {
             case ReturnRequestResult.Started:
-                return "เรียกเจ้าของสินค้ากลับมาแล้ว!";
+                return "The owner has been called back!";
             case ReturnRequestResult.NoItem:
-                return "วางสินค้าที่จุดคืนของก่อน";
+                return "Place an item on the return spot first";
             case ReturnRequestResult.NotSolved:
-                return "สินค้ายังไม่ได้ผ่าน Puzzle!";
+                return "This item hasn't been cleansed yet!";
             case ReturnRequestResult.ReturnBusy:
-                return "มีลูกค้ากำลังมารับของอยู่";
+                return "A customer is already on the way";
             case ReturnRequestResult.MissingPoints:
-                return "ตั้งค่าจุดรับของยังไม่ครบ";
+                return "Pickup points are not set up";
             default:
-                return "ไม่พบเจ้าของสินค้าชิ้นนี้";
+                return "Can't find the owner of this item";
         }
     }
 

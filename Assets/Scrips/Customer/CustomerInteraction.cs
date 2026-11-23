@@ -12,7 +12,7 @@ public class CustomerInteraction : MonoBehaviour
     [Header("Customer Dialogue")]
     [TextArea(2, 4)]
     public string customerMessage =
-        "สวัสดีค่ะ!\nฉันมีของบางอย่างอยากให้คุณช่วยดูหน่อย...";
+        "Hello!\nI have something I'd like you to take a look at...";
 
     [Header("Fade Settings")]
     public float fadeDuration = 0.25f;
@@ -180,7 +180,7 @@ public class CustomerInteraction : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (isReturnCustomer)
+        if (isReturnCustomer || Time.timeScale <= 0f)
             return;
         Debug.Log(
             "CUSTOMER CLICKED: " + gameObject.name +
@@ -511,6 +511,23 @@ public class CustomerInteraction : MonoBehaviour
     // =================================
     // SAVE / RESTORE INTERACTION
     // =================================
+
+    /// <summary>ปิดร้านแล้ว: ถ้ายังไม่ได้รับออเดอร์ ให้ปิดบทสนทนาและเดินออกจากร้าน</summary>
+    public void DismissForClosing()
+    {
+        if (orderAccepted || isReturnCustomer)
+            return;
+
+        canInteract = false;
+
+        HideAlert();
+
+        if (dialogueBubble != null && dialogueBubble.activeSelf)
+            CloseDialogue();
+
+        if (movement != null)
+            movement.LeaveShop();
+    }
 
     public bool GetOrderAcceptedState()
     {

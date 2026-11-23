@@ -664,6 +664,76 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2112679267
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2112679269}
+  - component: {fileID: 2112679268}
+  m_Layer: 0
+  m_Name: CurseCleansingController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2112679268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2112679267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50ccc47e63cc21b42a2e4848f6742cd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurseCleansingController
+  itemDisplay: {fileID: 590524104}
+  puzzleWindows:
+  - {fileID: 633376331663512155, guid: baae3497f9b5a5f41801af3a61175d0f, type: 3}
+  - {fileID: 1559101126372835673, guid: 1b33f0f2a1146a542bd3be561ceffde6, type: 3}
+  - {fileID: 1287960116093082396, guid: 4c20eb3c8a3b43d44a0c9275b1662524, type: 3}
+  - {fileID: 2436135224171756773, guid: 2291ce1de27c0b44fad1d369caeca497, type: 3}
+  canvas: {fileID: 1748000942}
+  scanKey: 113
+  cursePointCount: 1
+  placementArea: 0.55
+  revealStagger: 0.12
+  curseColor: {r: 0.85, g: 0.25, b: 1, a: 1}
+  pointSize: 0.5
+  customPointSprite: {fileID: 0}
+  scanOverlay: {fileID: 0}
+  overlayAlpha: 0.45
+  scanDimColor: {r: 0.6, g: 0.6, b: 0.7, a: 1}
+  hintText: {fileID: 0}
+  returnDelay: 1.8
+  shopSceneName: ShopScene
+  shopSceneBuildIndex: 1
+  scanOnSfx: {fileID: 0}
+  scanOffSfx: {fileID: 0}
+  pointClickSfx: {fileID: 0}
+  failSfx: {fileID: 0}
+  successSfx: {fileID: 0}
+--- !u!4 &2112679269
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2112679267}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 593.9373, y: 323.05188, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -674,3 +744,4 @@ SceneRoots:
   - {fileID: 1748000942}
   - {fileID: 1835842961}
   - {fileID: 2091298440}
+  - {fileID: 2112679269}

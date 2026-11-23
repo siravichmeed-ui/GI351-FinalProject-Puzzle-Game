@@ -511,6 +511,9 @@ public class DraggableItem : MonoBehaviour
     void OnMouseDown()
     {
         // ล็อกอยู่ (เจ้าของกำลังมารับ) -> หยิบไม่ได้ แต่ตอบสนองนิดหน่อย
+        if (Time.timeScale <= 0f)
+            return;
+
         if (isLocked)
         {
             Wobble(1f);
@@ -821,7 +824,7 @@ public class DraggableItem : MonoBehaviour
         Wobble(1f);
 
         FloatingText.Spawn(
-            "สะอาดแล้ว!",
+            "Cleansed!",
             transform.position + Vector3.up * 0.9f,
             new Color(0.6f, 1f, 0.8f),
             5f

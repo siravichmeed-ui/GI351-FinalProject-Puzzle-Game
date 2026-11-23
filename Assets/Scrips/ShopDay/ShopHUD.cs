@@ -1,29 +1,33 @@
-
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
+/// <summary>HUD ของร้าน: วัน เวลา เงิน ค่าเช่า สถานะ — ช่องไหนไม่ใส่ก็ข้าม</summary>
 public class ShopHUD : MonoBehaviour
 {
     public TMP_Text dayText;
     public TMP_Text timeText;
+    [Tooltip("ถ้า ShopMoneyManager มีช่องเงินของตัวเองอยู่แล้ว (นับเลขวิ่ง) HUD จะไม่แตะช่องนี้")]
     public TMP_Text moneyText;
     public TMP_Text rentText;
     public TMP_Text statusText;
 
-    private ShopDayManager shop;
+    [Header("Optional")]
+    public TMP_Text earningsText;
+    public TMP_Text debtText;
+    [Tooltip("แถบความคืบหน้าของวัน (Image Type = Filled)")]
+    public Image dayProgressFill;
 
-    private void Start()
-    {
-        shop = ShopDayManager.Instance;
-        UpdateUI();
-    }
+    private ShopDayManager shop;
 
     private void Update()
     {
         if (shop == null)
         {
             shop = ShopDayManager.Instance;
-            return;
+
+            if (shop == null)
+                return;
         }
 
         UpdateUI();
@@ -31,26 +35,58 @@ public class ShopHUD : MonoBehaviour
 
     private void UpdateUI()
     {
-        if (shop == null) return;
+        if (dayText != null)
+            dayText.text = "DAY " + shop.currentDay;
 
-        dayText.text = "DAY " + shop.currentDay;
+        if (timeText != null)
+            timeText.text = shop.CurrentTime;
 
-        timeText.text = shop.CurrentTime;
+        ShopMoneyManager wallet = ShopMoneyManager.Instance;
 
-        moneyText.text = "$ " + shop.money;
+        if (moneyText != null && wallet != null && !wallet.HasMoneyText)
+            moneyText.text = "$ " + wallet.CurrentMoney.ToString("N0");
 
-        rentText.text = "Rent: $ " +
-            (shop.unpaidRent + shop.dailyRent);
+        if (rentText != null)
+            rentText.text = "Rent: $ " + shop.RentDueTonight.ToString("N0");
 
-        if (shop.IsShopOpen)
+        if (earningsText != null)
+            earningsText.text = "Today: $ " + shop.TodayEarnings.ToString("N0");
+
+        if (debtText != null)
         {
-            statusText.text = "SHOP OPEN";
-            statusText.color = Color.green;
+            if (shop.unpaidRent > 0)
+            {
+                debtText.text = "DEBT: $ " + shop.unpaidRent.ToString("N0");
+                debtText.color = Color.red;
+            }
+            else
+            {
+                debtText.text = "";
+            }
         }
-        else
+
+        if (dayProgressFill != null)
+            dayProgressFill.fillAmount = shop.Progress01;
+
+        if (statusText != null)
         {
-            statusText.text = "SHOP CLOSED";
-            statusText.color = Color.red;
+            switch (shop.Phase)
+            {
+                case ShopPhase.Open:
+                    statusText.text = "SHOP OPEN";
+                    statusText.color = Color.green;
+                    break;
+
+                case ShopPhase.Closing:
+                    statusText.text = "CLOSING...";
+                    statusText.color = new Color(1f, 0.8f, 0.2f);
+                    break;
+
+                default:
+                    statusText.text = "SHOP CLOSED";
+                    statusText.color = Color.red;
+                    break;
+            }
         }
     }
 }

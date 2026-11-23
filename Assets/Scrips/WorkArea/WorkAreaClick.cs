@@ -143,7 +143,7 @@ public class WorkAreaClick : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (workArea == null)
+        if (workArea == null || Time.timeScale <= 0f)
             return;
 
         GameObject boardItem = workArea.CurrentItem;

@@ -379,7 +379,7 @@ public class ShatteredMirrorPuzzle : MonoBehaviour, IPuzzle
         float shade = 1f - UnityEngine.Random.Range(0f, facetStrength);
 
         // ตัวเศษ (อยู่ในถาด)
-        var go = new GameObject("Shard_" + index, typeof(RectTransform));
+        var go = new GameObject("Shard_" + index, typeof(RectTransform), typeof(CanvasRenderer));
         go.transform.SetParent(looseRoot, false);
         var rt = (RectTransform)go.transform;
         SetupRect(rt, startPos, sz, pivot);
@@ -390,7 +390,7 @@ public class ShatteredMirrorPuzzle : MonoBehaviour, IPuzzle
         fill.SetAllDirty();
 
         // รอยร้าวรอบเศษ
-        var oGo = new GameObject("Outline", typeof(RectTransform));
+        var oGo = new GameObject("Outline", typeof(RectTransform), typeof(CanvasRenderer));
         oGo.transform.SetParent(go.transform, false);
         var ort = (RectTransform)oGo.transform;
         ort.pivot = pivot; // ตั้ง pivot ก่อน แล้วค่อยยืดให้เท่าตัวเศษ เพื่อให้จุดหมุนตรงกันเป๊ะ
@@ -402,7 +402,7 @@ public class ShatteredMirrorPuzzle : MonoBehaviour, IPuzzle
         outl.SetAllDirty();
 
         // รอยแตกจางๆ บนพื้นที่ต่อภาพ (ตัวช่วย)
-        var gGo = new GameObject("Guide_" + index, typeof(RectTransform));
+        var gGo = new GameObject("Guide_" + index, typeof(RectTransform), typeof(CanvasRenderer));
         gGo.transform.SetParent(guidesRoot, false);
         var grt = (RectTransform)gGo.transform;
         Vector2 home = boardOrigin + centroid;

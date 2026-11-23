@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>กราฟิกรูปหลายเหลี่ยม 1 เศษ: โหมดเติมสี (ใช้ texture ของรูป) หรือโหมดเส้นขอบ (รอยร้าว)</summary>
+[RequireComponent(typeof(CanvasRenderer))]
 public class MirrorShardGraphic : MaskableGraphic, ICanvasRaycastFilter
 {
     public Vector2[] poly;      // จุดของรูปหลายเหลี่ยม (เทียบกับจุด pivot ของ RectTransform)

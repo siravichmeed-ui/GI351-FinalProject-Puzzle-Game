@@ -377,9 +377,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShatteredMirrorPuzzle
   windowRoot: {fileID: 856197132}
   images:
-  - {fileID: 3359465506682733134, guid: 1d278115fd7aa37478a4d3a58602ca8a, type: 3}
+  - {fileID: -6665582588061223574, guid: 349f9d8869569c34c808b6fdeb1ad1ad, type: 3}
   textures:
-  - {fileID: 2800000, guid: 1d278115fd7aa37478a4d3a58602ca8a, type: 3}
+  - {fileID: 2800000, guid: 349f9d8869569c34c808b6fdeb1ad1ad, type: 3}
   cols: 4
   rows: 3
   splitChance: 0.35

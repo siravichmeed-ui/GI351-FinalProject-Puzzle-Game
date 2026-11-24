@@ -1,6 +1,7 @@
 using System.Collections;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using UnityEngine.Audio;
 
 public class CustomerInteraction : MonoBehaviour
 {
@@ -42,10 +43,10 @@ public class CustomerInteraction : MonoBehaviour
     [Header("References (optional)")]
     public CustomerMovement movement;
 
-    [Header("Audio (optional)")]
-    public AudioClip popSfx;
-    public AudioClip typeBlipSfx;
-    public AudioClip closeSfx;
+    [Header("Audio ID")]
+    public string popSoundID = "Customer_Pop";
+    public string typeBlipSoundID = "Customer_Type";
+    public string closeSoundID = "Customer_Close";
 
     private bool canInteract = true;
     private bool orderAccepted = false;
@@ -57,7 +58,7 @@ public class CustomerInteraction : MonoBehaviour
     private Coroutine alertCoroutine;
 
     private RectTransform dialogueRect;
-    private AudioSource audioSource;
+    
 
     private Vector3 alertBasePos;
     private Vector3 alertBaseScale;
@@ -80,14 +81,7 @@ public class CustomerInteraction : MonoBehaviour
         if (dialogueCanvasGroup != null)
             dialogueCanvasGroup.alpha = 0;
 
-        audioSource = GetComponent<AudioSource>();
-
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.playOnAwake = false;
-            audioSource.spatialBlend = 0f;
-        }
+        
 
         if (movement == null)
             movement = GetComponent<CustomerMovement>();
@@ -304,7 +298,7 @@ public class CustomerInteraction : MonoBehaviour
         dialogueText.text = customerMessage;
         dialogueText.maxVisibleCharacters = 0;
 
-        PlaySfx(popSfx, 1f);
+        AudioManager.Instance.PlaySFX(popSoundID);
 
         if (movement != null)
             movement.TalkBounce(0.08f);
@@ -398,7 +392,7 @@ public class CustomerInteraction : MonoBehaviour
 
     void TypeBlip()
     {
-        PlaySfx(typeBlipSfx, 0.5f);
+        AudioManager.Instance.PlaySFX(typeBlipSoundID);
 
         if (movement != null)
             movement.TalkBounce(0.03f);
@@ -469,7 +463,7 @@ public class CustomerInteraction : MonoBehaviour
             StopCoroutine(fadeCoroutine);
         }
 
-        PlaySfx(closeSfx, 1f);
+        AudioManager.Instance.PlaySFX(closeSoundID);
 
         fadeCoroutine = StartCoroutine(HideDialogue());
     }
@@ -582,11 +576,5 @@ public class CustomerInteraction : MonoBehaviour
                   + c1 * Mathf.Pow(t - 1f, 2);
     }
 
-    void PlaySfx(AudioClip clip, float volume)
-    {
-        if (clip == null) return;
-
-        audioSource.pitch = Random.Range(0.92f, 1.08f);
-        audioSource.PlayOneShot(clip, volume);
-    }
+    
 }

@@ -1,0 +1,259 @@
+fileFormatVersion: 2
+guid: fe25f89b7cc01344c8647bb92b05f4b7
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5765909047878115194
+    second: SilderbgEx._0
+  - first:
+      213: -2450107066896033805
+    second: SilderbgEx._1
+  - first:
+      213: 426159240662719997
+    second: SilderbgEx._2
+  - first:
+      213: 6579583097279969706
+    second: SilderbgEx._3
+  - first:
+      213: -2788680082736685911
+    second: SilderbgEx._4
+  - first:
+      213: -4689205939070716497
+    second: SilderbgEx._5
+  - first:
+      213: 9080595174710429044
+    second: SilderbgEx._6
+  - first:
+      213: 5018833797558434370
+    second: SilderbgEx._7
+  - first:
+      213: 2041914069929263364
+    second: SilderbgEx._8
+  - first:
+      213: 7668391162844472001
+    second: SilderbgEx._9
+  - first:
+      213: -3297742296889470705
+    second: SilderbgEx._10
+  - first:
+      213: 3072378984089567206
+    second: SilderbgEx._11
+  - first:
+      213: -4455594701685770570
+    second: SilderbgEx._12
+  - first:
+      213: 4941818945435538935
+    second: SilderbgEx._13
+  - first:
+      213: -3516832253015680328
+    second: SilderbgEx._14
+  - first:
+      213: -3400096975975036004
+    second: SilderbgEx._15
+  - first:
+      213: -5224116868889815147
+    second: SilderbgEx._16
+  - first:
+      213: 3772876284457987310
+    second: SilderbgEx._17
+  - first:
+      213: 4853638117105648037
+    second: SilderbgEx._18
+  - first:
+      213: -4511723770701395415
+    second: SilderbgEx._19
+  - first:
+      213: -6384372417896934921
+    second: SilderbgEx._20
+  - first:
+      213: -8758914131262145472
+    second: SilderbgEx._21
+  - first:
+      213: -7975430867388247286
+    second: SilderbgEx._22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SilderbgEx._0
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 413
+        width: 1194
+        height: 207
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 680a30225406bffa0800000000000000
+      internalID: -5765909047878115194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a6ca54f8c6ebfce4bb0b9334acbc6a93
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SilderbgEx._0: -5765909047878115194
+      SilderbgEx._1: -2450107066896033805
+      SilderbgEx._10: -3297742296889470705
+      SilderbgEx._11: 3072378984089567206
+      SilderbgEx._12: -4455594701685770570
+      SilderbgEx._13: 4941818945435538935
+      SilderbgEx._14: -3516832253015680328
+      SilderbgEx._15: -3400096975975036004
+      SilderbgEx._16: -5224116868889815147
+      SilderbgEx._17: 3772876284457987310
+      SilderbgEx._18: 4853638117105648037
+      SilderbgEx._19: -4511723770701395415
+      SilderbgEx._2: 426159240662719997
+      SilderbgEx._20: -6384372417896934921
+      SilderbgEx._21: -8758914131262145472
+      SilderbgEx._22: -7975430867388247286
+      SilderbgEx._3: 6579583097279969706
+      SilderbgEx._4: -2788680082736685911
+      SilderbgEx._5: -4689205939070716497
+      SilderbgEx._6: 9080595174710429044
+      SilderbgEx._7: 5018833797558434370
+      SilderbgEx._8: 2041914069929263364
+      SilderbgEx._9: 7668391162844472001
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

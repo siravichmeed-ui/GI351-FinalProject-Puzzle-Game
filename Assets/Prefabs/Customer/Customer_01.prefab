@@ -585,6 +585,8 @@ MonoBehaviour:
   warpAccelTime: 0.12
   dashStretch: 0.18
   dashDustPerSecond: 40
+  windPush: 5
+  windRadius: 2.5
   bobAmount: 0.04
   bobSpeed: 10
   swayAmount: 3

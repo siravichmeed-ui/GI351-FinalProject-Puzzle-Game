@@ -48,6 +48,22 @@ public class HangingProp : MonoBehaviour
     [Range(0f, 1f)] public float flickerAmount = 0.2f;
     public float flickerSpeed = 6f;
 
+
+    [Header("Touch Sound")]
+    public List<string> touchSoundIDs = new List<string>();
+
+
+
+    [Range(0f, 1f)]
+    public float touchVolume = 0.7f;
+
+    [Tooltip("ระยะเวลาขั้นต่ำก่อนเล่นเสียงครั้งถัดไป")]
+    public float soundCooldown = 0.3f;
+
+    private AudioSource touchAudioSource;
+    private bool mouseWasTouching;
+    private float nextSoundTime;
+
     // ---------------------------------------------------------------
 
     private static readonly List<HangingProp> registry = new List<HangingProp>();
@@ -157,6 +173,14 @@ public class HangingProp : MonoBehaviour
 
         if (flickerTarget != null)
             flickerBase = flickerTarget.color;
+
+        touchAudioSource = GetComponent<AudioSource>();
+
+        if (touchAudioSource == null)
+            touchAudioSource = gameObject.AddComponent<AudioSource>();
+
+        touchAudioSource.playOnAwake = false;
+        touchAudioSource.spatialBlend = 0f;
     }
 
     // =====================================
@@ -232,18 +256,75 @@ public class HangingProp : MonoBehaviour
                 return;
         }
 
-        Vector3 m = cam.ScreenToWorldPoint(Input.mousePosition);
+        // อ่านตำแหน่งเมาส์
+        Vector3 mousePosition = Input.mousePosition;
+
+        // ป้องกันค่า Infinity และ NaN
+        if (float.IsNaN(mousePosition.x) ||
+            float.IsNaN(mousePosition.y) ||
+            float.IsInfinity(mousePosition.x) ||
+            float.IsInfinity(mousePosition.y))
+        {
+            mouseWasTouching = false;
+            hasLastMouse = false;
+            return;
+        }
+
+        // ตรวจสอบว่าเมาส์อยู่ในพื้นที่กล้องหรือไม่
+        if (!cam.pixelRect.Contains(
+            new Vector2(mousePosition.x, mousePosition.y)))
+        {
+            mouseWasTouching = false;
+            hasLastMouse = false;
+            return;
+        }
+
+        // ระยะจากกล้องถึงระนาบของวัตถุ
+        float cameraDistance = Vector3.Dot(
+            transform.position - cam.transform.position,
+            cam.transform.forward
+        );
+
+        if (cameraDistance <= 0f)
+            return;
+
+        // แปลง Screen Position เป็น World Position
+        mousePosition.z = cameraDistance;
+
+        Vector3 m = cam.ScreenToWorldPoint(mousePosition);
+
+        if (float.IsNaN(m.x) || float.IsNaN(m.y) ||
+            float.IsInfinity(m.x) || float.IsInfinity(m.y))
+        {
+            mouseWasTouching = false;
+            hasLastMouse = false;
+            return;
+        }
+
         Vector2 mouse = new Vector2(m.x, m.y);
 
-        if (hasLastMouse &&
-            Vector2.Distance(mouse, transform.position) < mouseRadius)
+        float distance = Vector2.Distance(mouse, transform.position);
+        bool isTouching = distance < mouseRadius;
+
+        // เล่นเสียงเมื่อเมาส์สัมผัสครั้งแรก
+        if (isTouching && !mouseWasTouching)
         {
-            // ปัดเมาส์ผ่านไปทางไหน ของแขวนแกว่งไปทางนั้น
-            float dx = Mathf.Clamp(mouse.x - lastMouse.x, -0.5f, 0.5f);
+            PlayTouchSound();
+        }
+
+        // ปัดเมาส์แล้วทำให้ของแกว่ง
+        if (hasLastMouse && isTouching)
+        {
+            float dx = Mathf.Clamp(
+                mouse.x - lastMouse.x,
+                -0.5f,
+                0.5f
+            );
 
             angVel += dx * mouseForce * sensitivity;
         }
 
+        mouseWasTouching = isTouching;
         lastMouse = mouse;
         hasLastMouse = true;
     }
@@ -313,5 +394,19 @@ public class HangingProp : MonoBehaviour
         Gizmos.color = new Color(1f, 0.8f, 0.2f, 1f);
         Gizmos.DrawWireSphere(world, 0.08f);
         Gizmos.DrawLine(world, transform.position);
+    }
+    private void PlayTouchSound()
+    {
+        if (touchSoundIDs == null || touchSoundIDs.Count == 0)
+            return;
+
+        string soundID = touchSoundIDs[
+            Random.Range(0, touchSoundIDs.Count)
+        ];
+
+        if (!string.IsNullOrEmpty(soundID))
+        {
+            AudioManager.Instance.PlaySFX(soundID);
+        }
     }
 }

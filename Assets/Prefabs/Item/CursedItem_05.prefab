@@ -84,7 +84,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 24
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -7262689721447280800, guid: 4d58b3693307965499a016f216da8393, type: 3}
+  m_Sprite: {fileID: -7240947852090347526, guid: e1168ac247b152249804cfe0b7e72718, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -133,7 +133,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 2.3666666, y: 2.5333333}
+    oldSize: {x: 17.09, y: 14.59}
     newSize: {x: 2.44, y: 2.89}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -156,8 +156,8 @@ MonoBehaviour:
   workArea: {fileID: 0}
   itemID: 005
   itemName: 005
-  cursedSprite: {fileID: 6230198638277940115, guid: 4d58b3693307965499a016f216da8393, type: 3}
-  cleanedSprite: {fileID: -7262689721447280800, guid: 4d58b3693307965499a016f216da8393, type: 3}
+  cursedSprite: {fileID: 2399296020146045977, guid: e1168ac247b152249804cfe0b7e72718, type: 3}
+  cleanedSprite: {fileID: -7240947852090347526, guid: e1168ac247b152249804cfe0b7e72718, type: 3}
   openHandCursor: {fileID: 0}
   grabHandCursor: {fileID: 0}
   draggingSortingOrder: 20
@@ -178,6 +178,11 @@ MonoBehaviour:
   landParticlesPrefab: {fileID: 0}
   shakeStrength: 0.04
   shakeDuration: 0.12
+  landBumpForce: 30
+  landBumpRadius: 4
+  cursedAuraColor: {r: 0.75, g: 0.45, b: 1, a: 1}
+  cursedAuraAmount: 0.35
+  cursedAuraSpeed: 2.2
   pickupSfx: {fileID: 0}
   dropSfx: {fileID: 0}
   landSfx: {fileID: 0}

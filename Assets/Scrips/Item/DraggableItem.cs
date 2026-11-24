@@ -53,6 +53,9 @@ public class DraggableItem : MonoBehaviour
     public ParticleSystem landParticlesPrefab;
     public float shakeStrength = 0.04f;
     public float shakeDuration = 0.12f;
+    [Tooltip("แรงสะเทือนที่ส่งไปให้ของแขวนรอบๆ ตอนสินค้าตกโต๊ะ")]
+    public float landBumpForce = 30f;
+    public float landBumpRadius = 4f;
 
     [Header("Cursed Aura")]
     [Tooltip("ของที่ยังไม่ผ่าน Puzzle จะเรืองแสงวูบวาบ")]
@@ -245,6 +248,8 @@ public class DraggableItem : MonoBehaviour
         isSquashing = true;
 
         PlaySfx(landSfx);
+
+        HangingProp.Bump(transform.position, landBumpForce * strength, landBumpRadius);
 
         if (landParticlesPrefab != null &&
             collision.contactCount > 0)

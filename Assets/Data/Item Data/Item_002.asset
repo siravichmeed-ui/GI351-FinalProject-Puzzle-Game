@@ -15,5 +15,5 @@ MonoBehaviour:
   itemID: 002
   itemName: 002
   itemPrefab: {fileID: 4971760110058272119, guid: b6ff009638e2d2f4bb3b4b5da2c8a437, type: 3}
-  cursedSprite: {fileID: -2389706291967646189, guid: 4d58b3693307965499a016f216da8393, type: 3}
-  cleanedSprite: {fileID: 5947358089969717315, guid: 4d58b3693307965499a016f216da8393, type: 3}
+  cursedSprite: {fileID: 7792039334551005206, guid: e3895214338c87940808f623f378239c, type: 3}
+  cleanedSprite: {fileID: 4214149858688995037, guid: e3895214338c87940808f623f378239c, type: 3}

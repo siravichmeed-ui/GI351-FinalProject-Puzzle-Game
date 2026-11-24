@@ -15,5 +15,5 @@ MonoBehaviour:
   itemID: TeddyBear_001
   itemName: Bear
   itemPrefab: {fileID: 6906783335301718194, guid: 71449c39c90723b40a6523266a7de471, type: 3}
-  cursedSprite: {fileID: 8579111415464493206, guid: ebd9a97bbd005604bb56bd8316163ad0, type: 3}
-  cleanedSprite: {fileID: 4693792977596894205, guid: 076bea08a9da99240b45f1ec7e91ba2f, type: 3}
+  cursedSprite: {fileID: -8718420172178761534, guid: 03de95d968cfeb94ca00cb046d2d5ac4, type: 3}
+  cleanedSprite: {fileID: 5191853097510026996, guid: 03de95d968cfeb94ca00cb046d2d5ac4, type: 3}

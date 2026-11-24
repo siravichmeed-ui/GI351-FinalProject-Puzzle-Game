@@ -553,7 +553,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -5306178471932041622, guid: 02a8c59b2492928488bd1b9839795856, type: 3}
+  m_Sprite: {fileID: 3191122964850554743, guid: 146ff8d79a4ee9344b68e57d9c10e2e3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -583,11 +583,19 @@ MonoBehaviour:
   accelTime: 0.5
   slowDownDistance: 1.2
   minSpeedRatio: 0.3
+  enterSpeedMultiplier: 3
+  exitSpeedMultiplier: 4
+  returnSpeedMultiplier: 3
+  warpAccelTime: 0.12
+  dashStretch: 0.18
+  dashDustPerSecond: 40
   bobAmount: 0.04
   bobSpeed: 10
   swayAmount: 3
   swaySpeed: 8
   stepSquash: 0.05
+  idleBreathAmount: 0.015
+  idleBreathSpeed: 2.2
   stepDust: {fileID: 0}
   dustPerStep: 2
   stepSfx: {fileID: 0}
@@ -648,6 +656,7 @@ MonoBehaviour:
   workArea: {fileID: 0}
   deliveryDuration: 0.8
   arcHeight: 0.6
+  spinDegrees: 12
   itemGravity: 1
 --- !u!61 &1801086578232294093
 BoxCollider2D:
@@ -687,7 +696,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 6.64, y: 10.24}
+    oldSize: {x: 3.92, y: 9.99}
     newSize: {x: 5.31, y: 10.11}
     adaptiveTilingThreshold: 0.5
     drawMode: 0

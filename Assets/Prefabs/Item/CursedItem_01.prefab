@@ -84,7 +84,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 24
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4693792977596894205, guid: 076bea08a9da99240b45f1ec7e91ba2f, type: 3}
+  m_Sprite: {fileID: 5191853097510026996, guid: 03de95d968cfeb94ca00cb046d2d5ac4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -133,7 +133,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 2.0333333, y: 2.4083333}
+    oldSize: {x: 7.72, y: 8.65}
     newSize: {x: 2.44, y: 2.89}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -156,8 +156,8 @@ MonoBehaviour:
   workArea: {fileID: 0}
   itemID: TeddyBear_001
   itemName: TeddyBear_001
-  cursedSprite: {fileID: 8579111415464493206, guid: ebd9a97bbd005604bb56bd8316163ad0, type: 3}
-  cleanedSprite: {fileID: 4693792977596894205, guid: 076bea08a9da99240b45f1ec7e91ba2f, type: 3}
+  cursedSprite: {fileID: -8718420172178761534, guid: 03de95d968cfeb94ca00cb046d2d5ac4, type: 3}
+  cleanedSprite: {fileID: 5191853097510026996, guid: 03de95d968cfeb94ca00cb046d2d5ac4, type: 3}
   openHandCursor: {fileID: 0}
   grabHandCursor: {fileID: 0}
   draggingSortingOrder: 20
@@ -178,6 +178,11 @@ MonoBehaviour:
   landParticlesPrefab: {fileID: 0}
   shakeStrength: 0.04
   shakeDuration: 0.12
+  landBumpForce: 30
+  landBumpRadius: 4
+  cursedAuraColor: {r: 0.75, g: 0.45, b: 1, a: 1}
+  cursedAuraAmount: 0.35
+  cursedAuraSpeed: 2.2
   pickupSfx: {fileID: 0}
   dropSfx: {fileID: 0}
   landSfx: {fileID: 0}

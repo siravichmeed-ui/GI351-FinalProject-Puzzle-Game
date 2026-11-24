@@ -27,6 +27,11 @@ public class CustomerMovement : MonoBehaviour
     [Tooltip("ฝุ่นที่พ่นต่อวินาทีตอนพุ่ง")]
     public float dashDustPerSecond = 40f;
 
+    [Header("Wind (ดันของแขวนที่เดินผ่าน)")]
+    [Tooltip("แรงลมที่ลูกค้าพัดใส่ HangingProp ขณะเดิน (0 = ปิด)")]
+    public float windPush = 5f;
+    public float windRadius = 2.5f;
+
     [Header("Walking Animation")]
     public float bobAmount = 0.04f;
     public float bobSpeed = 10f;
@@ -159,6 +164,19 @@ public class CustomerMovement : MonoBehaviour
 
                 // ก้าวถี่ขึ้นตามความเร็ว แต่ไม่ถี่เท่าตัวคูณเต็มๆ
                 walkTimer += dt * ratio * Mathf.Sqrt(speedMul);
+
+                // เดิน/พุ่งผ่านของแขวน -> ลมพัดให้แกว่ง
+                if (windPush > 0f)
+                {
+                    float dirX = targetPosition.x - currentPosition.x;
+                    dirX = Mathf.Abs(dirX) > 0.01f ? Mathf.Sign(dirX) : 0f;
+
+                    HangingProp.Disturb(
+                        currentPosition,
+                        dirX * currentSpeed * windPush * dt,
+                        windRadius
+                    );
+                }
 
                 // ยืดตัว + พ่นฝุ่นตอนพุ่ง
                 if (speedMul > 1.01f)

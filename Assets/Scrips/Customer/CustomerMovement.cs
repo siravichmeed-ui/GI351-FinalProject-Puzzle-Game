@@ -176,6 +176,13 @@ public class CustomerMovement : MonoBehaviour
                         dirX * currentSpeed * windPush * dt,
                         windRadius
                     );
+
+                    // ฝุ่นเวทมนตร์ถูกพัดตามหลังลูกค้า
+                    MagicDust.Disturb(
+                        currentPosition,
+                        dirX * currentSpeed * windPush * dt * 0.2f,
+                        windRadius * 1.5f
+                    );
                 }
 
                 // ยืดตัว + พ่นฝุ่นตอนพุ่ง

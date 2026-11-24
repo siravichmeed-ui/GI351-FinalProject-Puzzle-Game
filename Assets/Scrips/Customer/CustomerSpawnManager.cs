@@ -601,6 +601,12 @@ public class CustomerSpawnManager : MonoBehaviour
 
             if (order.customer != null)
             {
+                MagicDust.Burst(
+                    customerObject.transform.position + Vector3.up * 1.2f,
+                    18,
+                    new Color(1f, 0.85f, 0.25f)
+                );
+
                 FloatingText.Spawn(
                     "+" + order.customer.returnReward.ToString("N0"),
                     customerObject.transform.position + Vector3.up * 1.6f,

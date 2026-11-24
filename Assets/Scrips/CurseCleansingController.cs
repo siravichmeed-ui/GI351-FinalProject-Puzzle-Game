@@ -532,6 +532,8 @@ public class CurseCleansingController : MonoBehaviour
             {
                 swapped = true;
                 ShowCleanSprite();
+
+                MagicDust.Burst(t.position, 30, new Color(0.7f, 0.5f, 1f));
             }
 
             yield return null;

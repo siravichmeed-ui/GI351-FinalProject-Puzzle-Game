@@ -76,6 +76,13 @@ public class ItemDisplay : MonoBehaviour
         // เปลี่ยนเป็น Sprite ของ Item ที่เลือก
         spriteRenderer.sprite = receivedSprite;
 
+        // ยังไม่สะอาด -> มีออร่าคำสาปรอบสินค้า (สลายเองตอนล้างเสร็จ)
+        if (!ItemSessionData.IsPuzzleSolvedFor(ItemSessionData.CurrentItemInstanceID) &&
+            GetComponent<CurseAura>() == null)
+        {
+            gameObject.AddComponent<CurseAura>();
+        }
+
         Debug.Log(
             "Displaying Item: " +
             ItemSessionData.CurrentItemName +

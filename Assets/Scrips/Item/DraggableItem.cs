@@ -162,7 +162,13 @@ public class DraggableItem : MonoBehaviour
             Debug.LogError("DraggableItem: Rigidbody2D missing!");
 
         if (spriteRenderer != null)
+        {
             CreateShadow();
+
+            // ออร่าคำสาป (หายไปเองเมื่อล้างเสร็จ)
+            if (GetComponent<CurseAura>() == null)
+                gameObject.AddComponent<CurseAura>();
+        }
     }
 
     void OnDestroy()
@@ -827,6 +833,8 @@ public class DraggableItem : MonoBehaviour
         yield return new WaitForSeconds(0.35f);
 
         Wobble(1f);
+
+        MagicDust.Burst(transform.position, 24, new Color(0.6f, 1f, 0.8f));
 
         FloatingText.Spawn(
             "Cleansed!",

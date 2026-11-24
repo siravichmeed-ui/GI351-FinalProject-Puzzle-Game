@@ -551,6 +551,9 @@ public class ReturnBell : MonoBehaviour
 
         // กระดิ่งดัง -> ของแขวนรอบๆ แกว่งตาม
         HangingProp.Bump(transform.position, 40f * strength, 5f);
+
+        if (strength > 0.5f)
+            MagicDust.Burst(visual.position, 16, new Color(1f, 0.85f, 0.4f));
     }
 
     private static string MessageFor(ReturnRequestResult result)

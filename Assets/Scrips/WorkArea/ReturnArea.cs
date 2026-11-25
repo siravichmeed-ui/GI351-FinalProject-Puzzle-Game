@@ -10,8 +10,11 @@ public class ReturnArea : MonoBehaviour
     [Header("Juice (optional)")]
     public SpriteRenderer areaVisual;
 
+    [Tooltip("สีแสงที่เรืองขึ้นมา (ทองอ่อน)")]
+    public Color glowColor = new Color(1f, 0.82f, 0.35f, 1f);
+
     [Range(0f, 1f)] public float idleAlpha = 0f;
-    [Range(0f, 1f)] public float highlightAlpha = 0.25f;
+    [Range(0f, 1f)] public float highlightAlpha = 0.3f;
     public float breathSpeed = 3f;
     [Range(0f, 0.5f)] public float breathAmount = 0.08f;
     public float fadeSpeed = 10f;
@@ -38,7 +41,7 @@ public class ReturnArea : MonoBehaviour
 
         if (areaVisual != null)
         {
-            baseColor = areaVisual.color;
+            baseColor = glowColor;
             currentAlpha = idleAlpha;
             ApplyAlpha(currentAlpha);
         }

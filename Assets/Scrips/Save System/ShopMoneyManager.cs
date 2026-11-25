@@ -136,7 +136,7 @@ public class ShopMoneyManager : MonoBehaviour
     private void SetText(int value)
     {
         if (moneyText != null)
-            moneyText.text = value.ToString("N0");
+            moneyText.text = "$" + value.ToString("N0");
     }
 
     private void AnimateTo(int target, bool punch)

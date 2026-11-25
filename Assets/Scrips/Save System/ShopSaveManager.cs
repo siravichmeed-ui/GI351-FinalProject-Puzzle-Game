@@ -437,4 +437,16 @@ public class ShopSaveManager : MonoBehaviour
         if (Instance == this)
             Instance = null;
     }
+    /// <summary>ล้างเซฟเหมือนปุ่ม Reset แล้วไปซีนที่ระบุ (ใช้ตอน Game Over)</summary>
+    public void ResetAndLoadScene(string sceneName)
+    {
+        ClearSave();
+
+        Time.timeScale = 1f;
+
+        if (!string.IsNullOrEmpty(sceneName))
+            SceneManager.LoadScene(sceneName);
+        else
+            SceneManager.LoadScene(0);
+    }
 }

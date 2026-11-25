@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 /// <summary>
@@ -25,6 +26,23 @@ public class CurseCleansingController : MonoBehaviour
     public List<GameObject> puzzleWindows = new List<GameObject>();
     [Tooltip("ใช้เมื่อลาก Prefab ใส่ลิสต์: Canvas ที่จะสร้างสำเนา (ว่าง = Canvas แรกในซีน)")]
     public Transform canvas;
+
+    [Header("Puzzle Frame (Panel ตกแต่งรอบมินิเกม — ไม่บังคับ)")]
+    [Tooltip("Panel ที่จะเปิดขึ้นพร้อมมินิเกม (วางไว้ด้านหลัง window ของมินิเกมใน Hierarchy)")]
+    public GameObject puzzleFrame;
+    public TMP_Text puzzleTitleText;
+    public TMP_Text puzzleInstructionText;
+    [Tooltip("ปุ่มยอมแพ้ (ปิดมินิเกมโดยไม่ชนะ)")]
+    public Button giveUpButton;
+    public TMP_Text giveUpLabel;
+    public string giveUpText = "GIVE UP";
+    public string defaultPuzzleTitle = "CLEANSE THE CURSE";
+    [TextArea(1, 3)]
+    public string defaultPuzzleInstruction = "Solve the puzzle to remove the curse.";
+    [Tooltip("ชื่อหัวข้อของแต่ละมินิเกม เรียงตามลิสต์ Puzzle Windows (ว่าง = ใช้ค่าเริ่มต้น)")]
+    public List<string> puzzleTitles = new List<string>();
+    [Tooltip("คำอธิบายของแต่ละมินิเกม เรียงตามลิสต์ Puzzle Windows")]
+    public List<string> puzzleInstructions = new List<string>();
 
     [Header("Scan Mode")]
     public KeyCode scanKey = KeyCode.Q;
@@ -48,6 +66,15 @@ public class CurseCleansingController : MonoBehaviour
 
     [Header("Hint Text (optional)")]
     public TMP_Text hintText;
+
+    [Header("Texts ({key} = ปุ่มสแกน, {left} = จุดคำสาปที่เหลือ)")]
+    public string hintScanOff = "Press [{key}] to scan for curses";
+    public string hintScanOn = "Click a curse point ({left} left) - press [{key}] to stop scanning";
+    public string hintCleansed = "This item is already cleansed";
+    public string msgPointCleansed = "Curse point cleansed! {left} left";
+    public string msgFailed = "Failed... try again";
+    public string msgRemoved = "Curse removed!";
+    public string floatingCleansedText = "Cleansed!";
 
     [Header("After Cleansed")]
     public float returnDelay = 1.8f;
@@ -104,6 +131,15 @@ public class CurseCleansingController : MonoBehaviour
             if (w != null && w.scene.IsValid())
                 w.SetActive(false);
         }
+
+        if (puzzleFrame != null)
+            puzzleFrame.SetActive(false);
+
+        if (giveUpLabel != null)
+            giveUpLabel.text = giveUpText;
+
+        if (giveUpButton != null)
+            giveUpButton.onClick.AddListener(GiveUpCurrentPuzzle);
 
         // รอให้ ItemDisplay.Start() ใส่สปรต์ให้เสร็จก่อน
         yield return null;
@@ -421,6 +457,9 @@ public class CurseCleansingController : MonoBehaviour
         }
 
         puzzleOpen = true;
+        currentPuzzle = puzzle;
+
+        ShowPuzzleFrame(index);
 
         puzzle.Open(success => OnPuzzleClosed(marker, success, spawned));
     }
@@ -458,6 +497,9 @@ public class CurseCleansingController : MonoBehaviour
     private void OnPuzzleClosed(CursePointMarker marker, bool success, GameObject spawned)
     {
         puzzleOpen = false;
+        currentPuzzle = null;
+
+        HidePuzzleFrame();
 
         if (spawned != null)
             Destroy(spawned);
@@ -481,15 +523,14 @@ public class CurseCleansingController : MonoBehaviour
 
             int remaining = markers.Count - solvedCount;
 
-            statusMessage = "Curse point cleansed! " + remaining +
-                            (remaining == 1 ? " point left" : " points left");
+            /*statusMessage = TextTemplate.Fill(msgPointCleansed, ("left", remaining));*/
         }
         else
         {
             marker.Shake();
             PlaySfx(failSfx);
 
-            statusMessage = "Failed... try again";
+            statusMessage = msgFailed;
         }
 
         RefreshHint();
@@ -507,7 +548,7 @@ public class CurseCleansingController : MonoBehaviour
         ItemSessionData.MarkPuzzleSolved();
 
         SetScanning(false);
-        statusMessage = "Curse removed!";
+        statusMessage = msgRemoved;
         RefreshHint();
 
         yield return new WaitForSecondsRealtime(0.25f);
@@ -542,7 +583,7 @@ public class CurseCleansingController : MonoBehaviour
         t.localScale = baseScale;
 
         FloatingText.Spawn(
-            "Cleansed!",
+            floatingCleansedText,
             t.position + Vector3.up * 1.2f,
             new Color(0.6f, 1f, 0.8f),
             6f
@@ -577,10 +618,11 @@ public class CurseCleansingController : MonoBehaviour
         leaving = true;
         Time.timeScale = 1f;
 
+        // เล่นควันคลุมจอก่อนกลับร้าน (ถ้ามี SceneTransition ในซีน)
         if (!string.IsNullOrEmpty(shopSceneName))
-            SceneManager.LoadScene(shopSceneName);
+            SceneTransition.Load(shopSceneName);
         else
-            SceneManager.LoadScene(shopSceneBuildIndex);
+            SceneTransition.Load(shopSceneBuildIndex);
     }
 
     // =====================================
@@ -597,14 +639,55 @@ public class CurseCleansingController : MonoBehaviour
             hintText.text = statusMessage;
             return;
         }
-
+/*
         if (cleansed)
-            hintText.text = "This item is already cleansed";
+            hintText.text = hintCleansed;
         else if (!scanning)
-            hintText.text = "Press [" + scanKey + "] to scan for curses";
+            hintText.text = TextTemplate.Fill(hintScanOff, ("key", scanKey));
         else
-            hintText.text = "Click a curse point (" + (markers.Count - solvedCount) +
-                            " left) - press [" + scanKey + "] to stop scanning";
+            hintText.text = TextTemplate.Fill(
+                hintScanOn,
+                ("key", scanKey),
+                ("left", markers.Count - solvedCount));*/
+    }
+
+    // =====================================
+    // PUZZLE FRAME
+    // =====================================
+
+    private IPuzzle currentPuzzle;
+
+    private void ShowPuzzleFrame(int index)
+    {
+        if (puzzleFrame == null)
+            return;
+
+        if (puzzleTitleText != null)
+            puzzleTitleText.text = ListText(puzzleTitles, index, defaultPuzzleTitle);
+
+        if (puzzleInstructionText != null)
+            puzzleInstructionText.text = ListText(puzzleInstructions, index, defaultPuzzleInstruction);
+
+        puzzleFrame.SetActive(true);
+    }
+
+    private void HidePuzzleFrame()
+    {
+        if (puzzleFrame != null)
+            puzzleFrame.SetActive(false);
+    }
+
+    private static string ListText(List<string> list, int index, string fallback)
+    {
+        return list != null && index >= 0 && index < list.Count && !string.IsNullOrEmpty(list[index])
+            ? list[index]
+            : fallback;
+    }
+
+    private void GiveUpCurrentPuzzle()
+    {
+        if (currentPuzzle != null)
+            currentPuzzle.GiveUp();
     }
 
     private static bool IsPointerOverUI()

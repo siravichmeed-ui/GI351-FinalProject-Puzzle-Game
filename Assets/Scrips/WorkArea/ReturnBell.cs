@@ -75,6 +75,22 @@ public class ReturnBell : MonoBehaviour
     [SerializeField] private TMP_Text feedbackText;
     [SerializeField] private float feedbackDuration = 1.6f;
 
+    [Header("Glow (แสงทองตอนมีของพร้อมคืน)")]
+    [Tooltip("Sprite ที่จะให้เรืองขอบ — ว่างไว้ = ใช้ sprite ทั้งหมดของตัวกระดิ่ง (Visual) ถ้าอยากให้พู่เรืองด้วย ลากพู่ใส่เพิ่มได้")]
+    [SerializeField] private SpriteRenderer[] glowTargets;
+    [SerializeField] private Color glowColor = new Color(1f, 0.82f, 0.35f, 1f);
+    [Tooltip("ความหนาของขอบเรือง (หน่วย world)")]
+    [SerializeField] private float glowThickness = 0.04f;
+    [Tooltip("จำนวนสำเนาที่ใช้ทำขอบ — 8 พอดี, 12-16 จะเนียนขึ้นถ้าขอบหนา")]
+    [Range(4, 16)][SerializeField] private int glowSamples = 8;
+    [Range(0f, 1f)][SerializeField] private float glowIdleAlpha = 0f;
+    [Range(0f, 1f)][SerializeField] private float glowHighlightAlpha = 0.3f;
+    [SerializeField] private float glowBreathSpeed = 3f;
+    [Range(0f, 0.5f)][SerializeField] private float glowBreathAmount = 0.08f;
+    [SerializeField] private float glowFadeSpeed = 10f;
+    [Range(0f, 1f)][SerializeField] private float glowPulseAlpha = 0.35f;
+    [SerializeField] private float glowPulseDecay = 6f;
+
     [Header("Audio (optional)")]
     [Tooltip("เสียงตอนจับพู่/เริ่มดึง")]
     [SerializeField] private AudioClip tugSfx;
@@ -120,6 +136,18 @@ public class ReturnBell : MonoBehaviour
     private float ringStrength;
     private float nextRingTime;
 
+    private float glowAlpha;
+    private float glowPulse;
+
+    private class GlowRig
+    {
+        public SpriteRenderer source;
+        public SpriteRenderer[] copies;
+    }
+
+    private readonly System.Collections.Generic.List<GlowRig> glowRigs =
+        new System.Collections.Generic.List<GlowRig>();
+
     private Camera cam;
     private Coroutine feedbackRoutine;
 
@@ -155,6 +183,11 @@ public class ReturnBell : MonoBehaviour
             cordBaseScale = cordToStretch.localScale;
 
         SetupTassel();
+
+        // สร้างหลัง SetupTassel เพื่อไม่ให้สำเนาขอบไปรบกวนการวัดขนาด/จุดยึดของพู่
+        BuildGlowOutline();
+        glowAlpha = glowIdleAlpha;
+        ApplyGlow(glowAlpha);
     }
 
     private void SetupTassel()
@@ -327,6 +360,109 @@ public class ReturnBell : MonoBehaviour
         UpdateInput(dt);
         UpdateSpring(dt);
         ApplyVisuals();
+        UpdateGlow(dt);
+    }
+
+    // =====================================
+    // GLOW (เรืองทองเมื่อมีของที่ล้างเสร็จวางรออยู่และพร้อมให้ดึงเรียกเจ้าของ)
+    // =====================================
+
+    // สร้างสำเนา sprite สีทองเลื่อนรอบทิศ วางไว้หลังตัวจริง -> เห็นเป็นขอบเรืองรอบรูปทรง
+    private void BuildGlowOutline()
+    {
+        SpriteRenderer[] targets = glowTargets;
+
+        if (targets == null || targets.Length == 0)
+            targets = visual.GetComponentsInChildren<SpriteRenderer>();
+
+        int samples = Mathf.Max(glowSamples, 4);
+
+        foreach (SpriteRenderer src in targets)
+        {
+            if (src == null)
+                continue;
+
+            Vector3 lossy = src.transform.lossyScale;
+
+            GlowRig rig = new GlowRig
+            {
+                source = src,
+                copies = new SpriteRenderer[samples]
+            };
+
+            for (int i = 0; i < samples; i++)
+            {
+                float a = i / (float)samples * Mathf.PI * 2f;
+
+                GameObject go = new GameObject("GlowOutline_" + i);
+                go.transform.SetParent(src.transform, false);
+
+                // เลื่อนเป็นระยะ world คงที่ ไม่ว่า object จะถูกย่อ/ขยายแค่ไหน
+                go.transform.localPosition = new Vector3(
+                    Mathf.Cos(a) * glowThickness / Mathf.Max(Mathf.Abs(lossy.x), 0.0001f),
+                    Mathf.Sin(a) * glowThickness / Mathf.Max(Mathf.Abs(lossy.y), 0.0001f),
+                    0f
+                );
+
+                SpriteRenderer copy = go.AddComponent<SpriteRenderer>();
+                copy.sharedMaterial = src.sharedMaterial;
+                copy.sortingLayerID = src.sortingLayerID;
+                copy.sortingOrder = src.sortingOrder - 1;
+                copy.enabled = false;
+
+                rig.copies[i] = copy;
+            }
+
+            glowRigs.Add(rig);
+        }
+    }
+
+    private void UpdateGlow(float dt)
+    {
+        if (glowRigs.Count == 0)
+            return;
+
+        bool ready =
+            returnArea != null &&
+            !returnArea.IsReserved &&
+            returnArea.HasSolvedItem();
+
+        float target = glowIdleAlpha;
+
+        if (ready)
+            target = glowHighlightAlpha + Mathf.Sin(Time.time * glowBreathSpeed) * glowBreathAmount;
+
+        glowAlpha = Mathf.Lerp(glowAlpha, target, 1f - Mathf.Exp(-glowFadeSpeed * dt));
+        glowPulse = Mathf.Lerp(glowPulse, 0f, 1f - Mathf.Exp(-glowPulseDecay * dt));
+
+        ApplyGlow(glowAlpha + glowPulse);
+    }
+
+    private void ApplyGlow(float alpha)
+    {
+        Color c = glowColor;
+        c.a = Mathf.Clamp01(alpha);
+
+        bool visible = c.a > 0.01f;
+
+        foreach (GlowRig rig in glowRigs)
+        {
+            if (rig.source == null)
+                continue;
+
+            foreach (SpriteRenderer copy in rig.copies)
+            {
+                copy.enabled = visible && rig.source.enabled;
+
+                if (!copy.enabled)
+                    continue;
+
+                copy.sprite = rig.source.sprite;
+                copy.flipX = rig.source.flipX;
+                copy.flipY = rig.source.flipY;
+                copy.color = c;
+            }
+        }
     }
 
     private void UpdateInput(float dt)
@@ -528,6 +664,8 @@ public class ReturnBell : MonoBehaviour
         {
             returnArea.Reserve();
             returnArea.Pulse();
+
+            glowPulse = glowPulseAlpha;
 
             StartSwing(1f);
             PlaySfx(ringSfx);

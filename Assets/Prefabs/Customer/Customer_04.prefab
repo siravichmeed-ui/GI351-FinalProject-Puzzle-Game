@@ -99,8 +99,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -259,6 +259,8 @@ MonoBehaviour:
   warpAccelTime: 0.12
   dashStretch: 0.18
   dashDustPerSecond: 40
+  windPush: 5
+  windRadius: 2.5
   bobAmount: 0.04
   bobSpeed: 10
   swayAmount: 3
@@ -305,9 +307,9 @@ MonoBehaviour:
   alertFloatHeight: 0.08
   alertFloatSpeed: 4
   movement: {fileID: 2667905402594928913}
-  popSfx: {fileID: 0}
-  typeBlipSfx: {fileID: 0}
-  closeSfx: {fileID: 0}
+  popSoundID: Customer_Pop
+  typeBlipSoundID: Customer_Type
+  closeSoundID: Customer_Close
   itemDelivery: {fileID: 5186501461077377750}
 --- !u!114 &5186501461077377750
 MonoBehaviour:
@@ -441,7 +443,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -3243754715071202325, guid: d0bc6ec535ee31443bf4e71b2de36c30, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

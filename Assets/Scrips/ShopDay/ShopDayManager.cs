@@ -279,6 +279,11 @@ public class ShopDayManager : MonoBehaviour
 
             Debug.Log("BANKRUPTCY! GAME OVER!");
 
+            // ล้างเซฟทันที (ไฟล์ร้าน + เงิน + ความคืบหน้าสินค้า)
+            // ClearSave() จะตั้ง saveBlocked กัน autosave/OnApplicationQuit เขียนทับ
+            if (ShopSaveManager.Instance != null)
+                ShopSaveManager.Instance.ClearSave();
+
             OnBankrupt?.Invoke();
         }
         else
@@ -322,16 +327,13 @@ public class ShopDayManager : MonoBehaviour
         if (Phase != ShopPhase.GameOver)
             return;
 
-        Time.timeScale = 1f;
-
-        // เริ่มใหม่หมดในรอบหน้า (ไฟล์เซฟ เงิน ความคืบหน้าสินค้า)
         if (ShopSaveManager.Instance != null)
-            ShopSaveManager.Instance.ClearSave();
-
-        if (!string.IsNullOrEmpty(gameOverSceneName))
-            SceneManager.LoadScene(gameOverSceneName);
+            ShopSaveManager.Instance.ResetAndLoadScene(gameOverSceneName);
         else
-            SceneManager.LoadScene(0);
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(string.IsNullOrEmpty(gameOverSceneName) ? "" : gameOverSceneName);
+        }
     }
 
     // =====================================

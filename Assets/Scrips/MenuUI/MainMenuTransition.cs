@@ -95,6 +95,9 @@ public class MainMenuTransition : MonoBehaviour
 
         yield return new WaitForSeconds(remainingTime);
 
+        // ให้ซีนถัดไปเล่นควันจางออกตอนเริ่ม (ถ้ามี SceneTransition ในซีนนั้น)
+        SceneTransition.RequestIntro();
+
         // เปลี่ยน Scene
         SceneManager.LoadScene(nextSceneName);
     }

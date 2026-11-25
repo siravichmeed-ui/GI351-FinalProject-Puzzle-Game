@@ -31,8 +31,8 @@ public class DaySaveData
     public int unpaidRent;
     public int debtDays;
     public int todayEarnings;
-    public int todayRentPaid;
-    public bool manuallyClosed;
+    public int rentPaidToday;
+    public bool shopOpen;
 }
 
 [Serializable]

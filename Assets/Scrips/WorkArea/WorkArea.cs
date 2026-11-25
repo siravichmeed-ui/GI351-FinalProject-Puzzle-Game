@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class WorkArea : MonoBehaviour
@@ -6,11 +5,17 @@ public class WorkArea : MonoBehaviour
     [Header("Juice (optional)")]
     public SpriteRenderer areaVisual;
 
+    [Tooltip("สีแสงที่เรืองขึ้นมา (ทองอ่อน)")]
+    public Color glowColor = new Color(1f, 0.82f, 0.35f, 1f);
+
+    [Tooltip("ให้เรืองเองเมื่อลากของที่ยังไม่ได้ล้างมาและแท่นว่าง")]
+    public bool autoHighlightWhenDragging = true;
+
     [Range(0f, 1f)]
     public float idleAlpha = 0f;
 
     [Range(0f, 1f)]
-    public float highlightAlpha = 0.25f;
+    public float highlightAlpha = 0.3f;
 
     public float breathSpeed = 3f;
 
@@ -66,7 +71,7 @@ public class WorkArea : MonoBehaviour
 
         if (areaVisual != null)
         {
-            baseColor = areaVisual.color;
+            baseColor = glowColor;
             currentAlpha = idleAlpha;
 
             ApplyAlpha(currentAlpha);
@@ -86,7 +91,9 @@ public class WorkArea : MonoBehaviour
 
         float target = idleAlpha;
 
-        if (isHighlighted)
+        bool highlight = isHighlighted || ShouldAutoHighlight();
+
+        if (highlight)
         {
             target = highlightAlpha +
                      Mathf.Sin(Time.time * breathSpeed)
@@ -106,6 +113,28 @@ public class WorkArea : MonoBehaviour
         );
 
         ApplyAlpha(currentAlpha + pulse);
+    }
+
+    // =================================
+    // AUTO HIGHLIGHT
+    // =================================
+
+    bool ShouldAutoHighlight()
+    {
+        if (!autoHighlightWhenDragging || IsOccupied)
+            return false;
+
+        DraggableItem dragged = DraggableItem.DraggedItem;
+
+        if (dragged == null)
+            return false;
+
+        ItemPersistenceData p =
+            dragged.GetComponent<ItemPersistenceData>();
+
+        // ของที่ยังไม่ได้ล้าง = พร้อมมาวางบนแท่น
+        return p != null &&
+               !ItemSessionData.IsPuzzleSolvedFor(p.instanceID);
     }
 
     // =================================

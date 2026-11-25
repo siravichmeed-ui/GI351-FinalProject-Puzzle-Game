@@ -143,7 +143,7 @@ public class WorkAreaClick : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (workArea == null || Time.timeScale <= 0f)
+        if (workArea == null || Time.timeScale <= 0f || SceneTransition.IsTransitioning)
             return;
 
         GameObject boardItem = workArea.CurrentItem;
@@ -208,6 +208,7 @@ public class WorkAreaClick : MonoBehaviour
             ShopSaveManager.Instance.SaveGame();
         }
 
-        SceneManager.LoadScene(sceneName);
+        // เล่นควันคลุมจอก่อนเข้าซีนล้างคำสาป (ถ้าไม่มี SceneTransition ในซีนจะโหลดทันที)
+        SceneTransition.Load(sceneName);
     }
 }
